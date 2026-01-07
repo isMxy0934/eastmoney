@@ -7,3 +7,6 @@ openai
 apscheduler
 fastapi
 uvicorn
+yfinance
+mplfinance
+matplotlib

@@ -5,7 +5,7 @@ const API_BASE = 'http://localhost:8000/api';
 export interface ReportSummary {
   filename: string;
   date: string;
-  mode: 'pre' | 'post';
+  mode: 'pre' | 'post' | 'commodities';
   fund_code?: string;
   fund_name?: string;
   is_summary: boolean;
@@ -14,6 +14,15 @@ export interface ReportSummary {
 export const fetchReports = async (): Promise<ReportSummary[]> => {
   const response = await axios.get(`${API_BASE}/reports`);
   return response.data;
+};
+
+export const fetchCommodityReports = async (): Promise<ReportSummary[]> => {
+  const response = await axios.get(`${API_BASE}/commodities/reports`);
+  return response.data;
+};
+
+export const generateCommodityReport = async (asset: 'gold' | 'silver'): Promise<void> => {
+  await axios.post(`${API_BASE}/commodities/analyze`, { asset });
 };
 
 export const fetchReportContent = async (filename: string): Promise<string> => {

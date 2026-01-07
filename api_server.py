@@ -14,6 +14,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from src.analysis.pre_market import PreMarketAnalyst
 from src.analysis.post_market import PostMarketAnalyst
 from src.analysis.sentiment.dashboard import SentimentDashboard
+from src.analysis.commodities.gold_silver import GoldSilverAnalyst
 from src.data_sources.akshare_api import search_funds
 from src.storage.db import init_db, get_active_funds, get_all_funds, upsert_fund, delete_fund, get_fund_by_code
 from src.scheduler.manager import scheduler_manager
@@ -83,6 +84,9 @@ class SettingsUpdate(BaseModel):
 class GenerateRequest(BaseModel):
     fund_code: Optional[str] = None
 
+class CommodityAnalyzeRequest(BaseModel):
+    asset: str # "gold" or "silver"
+
 # --- Helpers ---
 def load_env_file():
     env_vars = {}
@@ -123,6 +127,19 @@ def save_env_file(updates: Dict[str, str]):
         f.writelines(lines)
 
 # --- Endpoints ---
+
+@app.post("/api/commodities/analyze")
+async def analyze_commodity(request: CommodityAnalyzeRequest):
+    try:
+        analyst = GoldSilverAnalyst()
+        # This is a synchronous call. For a real app, use background tasks.
+        # But for this CLI tool, it's acceptable.
+        report = analyst.analyze(request.asset)
+        return {"status": "success", "message": f"{request.asset} analysis complete"}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/api/reports", response_model=List[ReportSummary])
 async def list_reports():
@@ -203,12 +220,73 @@ async def get_report(filename: str):
         filepath = os.path.join(REPORT_DIR, "sentiment", filename)
     
     if not os.path.exists(filepath):
+        # Try commodities subdir
+        filepath = os.path.join(REPORT_DIR, "commodities", filename)
+
+    if not os.path.exists(filepath):
         raise HTTPException(status_code=404, detail="Report not found")
     
     with open(filepath, "r", encoding="utf-8") as f:
         content = f.read()
     
     return {"content": content}
+
+@app.get("/api/commodities/reports", response_model=List[ReportSummary])
+async def list_commodity_reports():
+    commodities_dir = os.path.join(REPORT_DIR, "commodities")
+    if not os.path.exists(commodities_dir):
+        return []
+
+    reports = []
+    files = glob.glob(os.path.join(commodities_dir, "*.md"))
+    files.sort(key=os.path.getmtime, reverse=True)
+    
+    for f in files:
+        filename = os.path.basename(f)
+        try:
+            # Format: YYYY-MM-DD_HHMMSS_commodities_CODE_NAME.md (New)
+            # Format: YYYY-MM-DD_commodities_CODE_NAME.md (Old)
+            name_no_ext = os.path.splitext(filename)[0]
+            parts = name_no_ext.split("_")
+            
+            # Identify format based on parts length and 'commodities' position
+            # New format: len >= 5, parts[2] == 'commodities'
+            # Old format: len >= 4, parts[1] == 'commodities'
+            
+            if len(parts) >= 5 and parts[2] == 'commodities':
+                date_str = parts[0]
+                time_str = parts[1]
+                code = parts[3]
+                name = "_".join(parts[4:])
+                formatted_date = f"{date_str} {time_str[:2]}:{time_str[2:4]}:{time_str[4:]}"
+                
+                reports.append(ReportSummary(
+                    filename=filename,
+                    date=formatted_date,
+                    mode="commodities",
+                    fund_code=code,
+                    fund_name=name,
+                    is_summary=False
+                ))
+            elif len(parts) >= 4 and parts[1] == 'commodities':
+                # Old format fallback
+                date_str = parts[0]
+                code = parts[2]
+                name = "_".join(parts[3:])
+                
+                reports.append(ReportSummary(
+                    filename=filename,
+                    date=date_str,
+                    mode="commodities",
+                    fund_code=code,
+                    fund_name=name,
+                    is_summary=False
+                ))
+        except Exception as e:
+            print(f"Error parsing commodity report {filename}: {e}")
+            continue
+            
+    return reports
 
 @app.get("/api/market-funds")
 async def search_market_funds(query: str = ""):

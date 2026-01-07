@@ -5,6 +5,7 @@ import Layout from './components/layout/Layout';
 import ReportsPage from './pages/Reports';
 import FundsPage from './pages/Funds';
 import SentimentPage from './pages/Sentiment';
+import CommoditiesPage from './pages/Commodities';
 import SettingsPage from './pages/Settings';
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
             <Route path="funds" element={<FundsPage />} />
             <Route path="sentiment" element={<SentimentPage />} />
             <Route path="reports" element={<ReportsPage />} />
+            <Route path="commodities" element={<CommoditiesPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
         </Routes>

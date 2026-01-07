@@ -12,6 +12,7 @@ import PieChartIcon from '@mui/icons-material/PieChart';
 import ArticleIcon from '@mui/icons-material/Article';
 import SettingsIcon from '@mui/icons-material/Settings';
 import AutoGraphIcon from '@mui/icons-material/AutoGraph';
+import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 
 const drawerWidth = 260;
 
@@ -19,6 +20,7 @@ const MENU_ITEMS = [
   { text: 'Universe', icon: <PieChartIcon />, path: '/funds' },
   { text: 'Sentiment', icon: <AutoGraphIcon />, path: '/sentiment' },
   { text: 'Intelligence', icon: <ArticleIcon />, path: '/reports' },
+  { text: 'Commodities', icon: <MonetizationOnIcon />, path: '/commodities' },
   { text: 'System', icon: <SettingsIcon />, path: '/settings' },
 ];
 
