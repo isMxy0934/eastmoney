@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     Box,
     Typography,
@@ -8,8 +9,6 @@ import {
     TextField,
     Tooltip,
     Paper,
-    Grid,
-    Divider,
     Chip,
     InputAdornment
 } from '@mui/material';
@@ -28,6 +27,7 @@ import { fetchCommodityReports, fetchReportContent, generateCommodityReport } fr
 import type { ReportSummary } from '../api';
 
 export default function CommoditiesPage() {
+    const { t } = useTranslation();
     const [reports, setReports] = useState<ReportSummary[]>([]);
     const [selectedReport, setSelectedReport] = useState<ReportSummary | null>(null);
     const [reportContent, setReportContent] = useState<string>('');
@@ -122,10 +122,10 @@ export default function CommoditiesPage() {
             <Box sx={{ px: 4, py: 3, bgcolor: '#fff', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                     <Typography variant="h6" sx={{ fontWeight: 800, color: '#0f172a', fontFamily: 'JetBrains Mono', letterSpacing: '-0.02em' }}>
-                        COMMODITIES INTELLIGENCE
+                        {t('commodities.title_main')}
                     </Typography>
                     <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 600 }}>
-                        Real-time Strategic Analysis
+                        {t('commodities.subtitle')}
                     </Typography>
                 </div>
                 
@@ -148,7 +148,7 @@ export default function CommoditiesPage() {
                             px: 2
                         }}
                     >
-                        {generatingGold ? 'Analyzing Gold...' : 'Analyze Gold'}
+                        {generatingGold ? t('commodities.analyzing_gold') : t('commodities.analyze_gold')}
                     </Button>
 
                     <Button
@@ -169,7 +169,7 @@ export default function CommoditiesPage() {
                             px: 2
                         }}
                     >
-                        {generatingSilver ? 'Analyzing Silver...' : 'Analyze Silver'}
+                        {generatingSilver ? t('commodities.analyzing_silver') : t('commodities.analyze_silver')}
                     </Button>
                 </Box>
             </Box>
@@ -182,7 +182,7 @@ export default function CommoditiesPage() {
                         <TextField
                             fullWidth
                             size="small"
-                            placeholder="Filter timeline..."
+                            placeholder={t('commodities.filter_timeline')}
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             InputProps={{
@@ -225,14 +225,14 @@ export default function CommoditiesPage() {
                                         >
                                             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 }}>
                                                 <Typography sx={{ fontWeight: 700, fontSize: '0.9rem', color: isGold ? '#b45309' : '#334155' }}>
-                                                    {isGold ? 'Gold Strategy' : 'Silver Strategy'}
+                                                    {isGold ? t('commodities.gold_strategy') : t('commodities.silver_strategy')}
                                                 </Typography>
                                                 {isGold ? <ShowChartIcon sx={{ fontSize: 16, color: '#d97706' }} /> : <TrendingUpIcon sx={{ fontSize: 16, color: '#64748b' }} />}
                                             </Box>
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                                                 <AccessTimeIcon sx={{ fontSize: 12, color: '#94a3b8' }} />
                                                 <Typography sx={{ fontSize: '0.7rem', color: '#94a3b8', fontFamily: 'JetBrains Mono' }}>
-                                                    INTEL REPORT
+                                                    {t('commodities.intel_report')}
                                                 </Typography>
                                             </Box>
                                         </Box>
@@ -248,7 +248,7 @@ export default function CommoditiesPage() {
                     {selectedReport ? (
                         <Box sx={{ maxWidth: '900px', mx: 'auto' }}>
                             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-                                <Tooltip title="Export High-Res Image">
+                                <Tooltip title={t('reports.download_image')}>
                                     <Button
                                         variant="outlined"
                                         size="small"
@@ -257,7 +257,7 @@ export default function CommoditiesPage() {
                                         startIcon={exporting ? <CircularProgress size={14} /> : <DownloadIcon />}
                                         sx={{ color: '#64748b', borderColor: '#cbd5e1', bgcolor: '#fff', '&:hover': { bgcolor: '#f1f5f9' } }}
                                     >
-                                        Export View
+                                        {t('reports.export')}
                                     </Button>
                                 </Tooltip>
                             </Box>
@@ -283,7 +283,7 @@ export default function CommoditiesPage() {
                                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                                         <div>
                                             <Typography variant="overline" sx={{ color: selectedReport.fund_code === 'gold' ? '#d97706' : '#64748b', fontWeight: 800, letterSpacing: '0.1em' }}>
-                                                INTELLIGENCE BRIEF
+                                                {t('commodities.brief')}
                                             </Typography>
                                             <Typography variant="h3" sx={{ fontWeight: 800, color: '#0f172a', mt: 1, mb: 2 }}>
                                                 {selectedReport.fund_name}
@@ -337,7 +337,7 @@ export default function CommoditiesPage() {
                                 {/* Footer */}
                                 <Box sx={{ p: 3, bgcolor: '#f8fafc', borderTop: '1px solid #f1f5f9', textAlign: 'center' }}>
                                     <Typography variant="caption" sx={{ color: '#94a3b8', fontFamily: 'JetBrains Mono', fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.1em' }}>
-                                        GENERATED BY VIBE_ALPHA AI CORE • {new Date().getFullYear()}
+                                        {t('commodities.footer')} • {new Date().getFullYear()}
                                     </Typography>
                                 </Box>
                             </Paper>
@@ -345,7 +345,7 @@ export default function CommoditiesPage() {
                     ) : (
                         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#94a3b8' }}>
                             <TrendingUpIcon sx={{ fontSize: 64, mb: 2, opacity: 0.2 }} />
-                            <Typography sx={{ fontWeight: 600 }}>Select a strategic report to view details</Typography>
+                            <Typography sx={{ fontWeight: 600 }}>{t('commodities.select_prompt')}</Typography>
                         </Box>
                     )}
                 </Box>

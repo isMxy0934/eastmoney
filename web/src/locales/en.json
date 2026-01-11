@@ -1,0 +1,232 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "live": "LIVE",
+    "refresh": "Refresh",
+    "error": "Error",
+    "system_offline": "System Offline",
+    "waiting": "Waiting...",
+    "code": "Code",
+    "name": "Name",
+    "change": "Change",
+    "trend": "Trend",
+    "search": "Search",
+    "actions": "Actions",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "total": "Total",
+    "date": "Date",
+    "type": "Type"
+  },
+  "layout": {
+    "title": "ALPHA",
+    "subtitle": "INTELLIGENCE CORE",
+    "menu": {
+      "dashboard": "Dashboard",
+      "dashboard_sub": "Market cockpit",
+      "universe": "Universe",
+      "universe_sub": "Manage portfolio nodes",
+      "sentiment": "Sentiment",
+      "sentiment_sub": "Market vibe analysis",
+      "intelligence": "Intelligence",
+      "intelligence_sub": "Deep dive reports",
+      "commodities": "Commodities",
+      "commodities_sub": "Global assets",
+      "system": "System",
+      "system_sub": "Core configuration"
+    },
+    "user": {
+      "admin": "Administrator",
+      "role": "System Master"
+    },
+    "footer": {
+      "copyright": "© 2026 VibeAlpha Terminal.",
+      "data_source": "Data by AkShare & Xueqiu"
+    },
+    "tools": {
+      "sync": "Market Network Sync",
+      "version": "Core Terminal v2.1"
+    }
+  },
+  "dashboard": {
+    "title": "Market Overview",
+    "macro": {
+      "system_reports": "System Reports",
+      "files": "Files",
+      "pre": "Pre",
+      "post": "Post",
+      "market_sentiment": "Market Sentiment",
+      "up": "Up",
+      "down": "Down",
+      "turnover": "Turnover",
+      "limit_up": "Limit Up",
+      "limit_down": "Limit Down",
+      "gold": "Gold"
+    },
+    "deep_dive": {
+      "smart_money": "Smart Money Flow",
+      "top_inflow": "Top Net Inflow Leaders",
+      "main_flow": "Main Flow",
+      "net_inflow": "Net Inflow",
+      "sector_leaders": "Sector Leaders",
+      "top_gainers": "Top 5 Gainers",
+      "sector_laggards": "Sector Laggards",
+      "top_losers": "Top 5 Losers"
+    },
+    "signals": {
+      "title": "Live Market Signals",
+      "real_time": "REAL-TIME",
+      "waiting": "Waiting for market signals..."
+    }
+  },
+  "funds": {
+    "title": "Fund Universe",
+    "subtitle": "Active Portfolio Configuration & Intelligence",
+    "add_target": "Add Target",
+    "table": {
+      "fund_entity": "FUND ENTITY",
+      "strategy": "STRATEGY",
+      "sectors": "SECTORS",
+      "auto_schedule": "AUTO SCHEDULE",
+      "actions": "ACTIONS",
+      "manual_only": "MANUAL ONLY",
+      "pre": "PRE",
+      "post": "POST"
+    },
+    "menu": {
+      "view_intelligence": "View Intelligence",
+      "run_pre": "Run Pre-Market Now",
+      "run_post": "Run Post-Market Now",
+      "edit_config": "Edit Config",
+      "delete": "Delete"
+    },
+    "dialog": {
+      "add_title": "Add New Target",
+      "edit_title": "Edit Configuration",
+      "market_search": "Market Intelligence Search",
+      "search_placeholder": "Search Fund Code or Name",
+      "asset_identity": "Asset Identity",
+      "fund_code": "Fund Code",
+      "fund_name": "Fund Name",
+      "strategy_config": "Strategy Configuration",
+      "style": "Style",
+      "focus_sectors": "Focus Sectors",
+      "schedule": "Intelligence Schedule (24H)",
+      "pre_market": "Pre-Market",
+      "post_market": "Post-Market",
+      "confirm": "Confirm Configuration",
+      "cancel": "Cancel"
+    },
+    "details": {
+      "latest_nav": "LATEST NAV",
+      "manager": "MANAGER",
+      "fund_size": "FUND SIZE",
+      "morningstar": "MORNINGSTAR",
+      "performance_analytics": "Performance Analytics",
+      "last_100_days": "Last 100 Trading Days",
+      "historical_reference": "Historical Reference",
+      "stats_tab": "Performance Stats",
+      "nav_tab": "NAV Timeline",
+      "timeframe": "TIMEFRAME",
+      "return": "RETURN",
+      "rank": "RANK",
+      "date": "DATE",
+      "adj_nav": "ADJ. NAV",
+      "core_holdings": "Core Strategic Holdings",
+      "no_portfolio": "Portfolio data restricted or unavailable",
+      "close": "Acknowledge & Close"
+    },
+    "messages": {
+      "delete_confirm": "Are you sure you want to remove this fund from your watch list?",
+      "delete_success": "Fund removed from watchlist",
+      "save_success": "Fund saved successfully",
+      "trigger_success": "Intelligence node triggered successfully"
+    }
+  },
+  "sentiment": {
+    "title": "Market Sentiment",
+    "news": "News",
+    "social": "Social Media",
+    "active": "Neural Analysis Active",
+    "run_analysis": "Run Analysis",
+    "timeline": "TIMELINE",
+    "today": "TODAY",
+    "no_signals": "No signals recorded.",
+    "select_sub": "or click \"Run Analysis\" to generate a new one",
+    "error_gen": "Failed to generate sentiment analysis.",
+    "error_load": "Failed to load report content."
+  },
+  "reports": {
+    "title": "Intelligence Reports",
+    "library": "Intelligence Library",
+    "search_placeholder": "Search reports...",
+    "daily_briefing": "Daily Briefing",
+    "market_wrap": "Market Wrap",
+    "strategy_analysis": "Strategy Analysis",
+    "performance_review": "Performance Review",
+    "download_image": "Download Image",
+    "export": "Export",
+    "processing": "Processing...",
+    "market_intelligence": "MARKET INTELLIGENCE",
+    "fund_analysis": "FUND ANALYSIS",
+    "daily_overview": "Daily Market Overview",
+    "footer_text": "Generated by EastMoney Pro AI • Confidential",
+    "select_prompt": "Select a report to view analysis",
+    "generate": "Generate Report",
+    "generating": "Generating...",
+    "types": {
+      "pre_market": "Pre-Market",
+      "post_market": "Post-Market",
+      "sector_analysis": "Sector Analysis"
+    }
+  },
+  "commodities": {
+    "title": "Global Commodities",
+    "title_main": "COMMODITIES INTELLIGENCE",
+    "subtitle": "Real-time Strategic Analysis",
+    "gold": "Gold",
+    "silver": "Silver",
+    "crude": "Crude Oil",
+    "analyzing_gold": "Analyzing Gold...",
+    "analyze_gold": "Analyze Gold",
+    "analyzing_silver": "Analyzing Silver...",
+    "analyze_silver": "Analyze Silver",
+    "filter_timeline": "Filter timeline...",
+    "gold_strategy": "Gold Strategy",
+    "silver_strategy": "Silver Strategy",
+    "intel_report": "INTEL REPORT",
+    "brief": "INTELLIGENCE BRIEF",
+    "footer": "GENERATED BY VIBE_ALPHA AI CORE",
+    "select_prompt": "Select a strategic report to view details"
+  },
+  "settings": {
+    "title": "System Configuration",
+    "subtitle": "Manage your AI intelligence providers and external data connections. Keys are stored securely in your local environment.",
+    "llm": {
+      "title": "Intelligence Engine",
+      "subtitle": "Select and configure the Large Language Model driving the analysis.",
+      "provider": "Active Provider",
+      "credentials": "Credentials",
+      "gemini_key": "Gemini API Key",
+      "openai_key": "OpenAI API Key",
+      "provider_help": "Choose the AI model used for report generation."
+    },
+    "data": {
+      "title": "Data Connections",
+      "subtitle": "Configure external services for web search and market data.",
+      "tavily_info": "A Tavily API key is required to perform real-time web searches for news and sentiment analysis.",
+      "tavily_key": "Tavily Search API Key"
+    },
+    "save": "Save Configuration",
+    "saving": "Saving Changes...",
+    "messages": {
+      "success": "Configuration saved successfully",
+      "fail": "Failed to save configuration"
+    },
+    "language": "Language",
+    "theme": "Theme"
+  }
+}
+

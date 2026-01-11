@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     Box,
     Typography,
@@ -33,6 +34,7 @@ import { fetchReports, fetchReportContent } from '../api';
 import type { ReportSummary } from '../api'
 
 export default function ReportsPage() {
+    const { t } = useTranslation();
     const [reports, setReports] = useState<ReportSummary[]>([]);
     const [selectedReport, setSelectedReport] = useState<ReportSummary | null>(null);
     const [reportContent, setReportContent] = useState<string>('');
@@ -199,13 +201,13 @@ export default function ReportsPage() {
                 {/* Header & Search */}
                 <div className="p-4 border-b border-slate-200">
                     <div className="flex justify-between items-center mb-4">
-                        <Typography variant="h6" className="font-bold text-slate-900 tracking-tight">Intelligence Library</Typography>
+                        <Typography variant="h6" className="font-bold text-slate-900 tracking-tight">{t('reports.library')}</Typography>
                         <IconButton size="small" onClick={loadReports} className="text-slate-400 hover:text-slate-700"><RefreshIcon /></IconButton>
                     </div>
                     <TextField
                         fullWidth
                         size="small"
-                        placeholder="Search reports..."
+                        placeholder={t('reports.search_placeholder')}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         InputProps={{
@@ -255,7 +257,7 @@ export default function ReportsPage() {
                                                     <ArticleIcon fontSize="small" sx={{ fontSize: 18, color: report.mode === 'pre' ? '#2563eb' : '#d97706' }} />
                                                 </ListItemIcon>
                                                 <ListItemText
-                                                    primary={report.mode === 'pre' ? 'Daily Briefing' : 'Market Wrap'}
+                                                    primary={report.mode === 'pre' ? t('reports.daily_briefing') : t('reports.market_wrap')}
                                                     secondary={report.mode === 'pre' ? 'PRE-MARKET' : 'POST-MARKET'}
                                                     primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 500, color: '#0f172a' }}
                                                     secondaryTypographyProps={{ fontSize: '0.65rem', color: '#64748b', letterSpacing: '0.05em' }}
@@ -308,7 +310,7 @@ export default function ReportsPage() {
                                                                         }
                                                                     </ListItemIcon>
                                                                     <ListItemText
-                                                                        primary={report.mode === 'pre' ? 'Strategy Analysis' : 'Performance Review'}
+                                                                        primary={report.mode === 'pre' ? t('reports.strategy_analysis') : t('reports.performance_review')}
                                                                         primaryTypographyProps={{ fontSize: '0.8rem', color: '#334155' }}
                                                                     />
                                                                 </ListItemButton>
@@ -331,7 +333,7 @@ export default function ReportsPage() {
                 {/* Export Button Bar */}
                 {selectedReport && (
                     <div className="p-3 border-b border-slate-200 bg-white/80 flex justify-end gap-2 backdrop-blur-sm">
-                        <Tooltip title="Download Image">
+                        <Tooltip title={t('reports.download_image')}>
                             <Button
                                 variant="outlined"
                                 size="small"
@@ -340,7 +342,7 @@ export default function ReportsPage() {
                                 disabled={exporting || loadingContent}
                                 className="border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-slate-400"
                             >
-                                {exporting ? 'Processing...' : 'Export'}
+                                {exporting ? t('reports.processing') : t('reports.export')}
                             </Button>
                         </Tooltip>
                     </div>
@@ -357,10 +359,10 @@ export default function ReportsPage() {
                                 <div className="flex justify-between items-start mb-6">
                                     <div>
                                         <Typography variant="caption" className="text-primary-DEFAULT font-bold tracking-[0.2em] block mb-2">
-                                            {selectedReport.is_summary ? 'MARKET INTELLIGENCE' : 'FUND ANALYSIS'}
+                                            {selectedReport.is_summary ? t('reports.market_intelligence') : t('reports.fund_analysis')}
                                         </Typography>
                                         <Typography variant="h4" className="text-slate-900 font-extrabold tracking-tight mb-2">
-                                            {selectedReport.is_summary ? 'Daily Market Overview' : selectedReport.fund_name}
+                                            {selectedReport.is_summary ? t('reports.daily_overview') : selectedReport.fund_name}
                                         </Typography>
                                         {!selectedReport.is_summary && (
                                             <div className="flex items-center gap-2">
@@ -407,14 +409,14 @@ export default function ReportsPage() {
                             {/* Footer */}
                             <div className="p-4 bg-slate-50 border-t border-slate-100 text-center">
                                 <Typography variant="caption" className="text-slate-400 font-mono text-[10px] tracking-widest uppercase">
-                                    Generated by EastMoney Pro AI • Confidential • {new Date().getFullYear()}
+                                    {t('reports.footer_text')} • {new Date().getFullYear()}
                                 </Typography>
                             </div>
                         </div>
                     ) : (
                         <div className="flex flex-col justify-center items-center h-full text-slate-400">
                             <BusinessCenterIcon sx={{ fontSize: 60, opacity: 0.2, mb: 2 }} />
-                            <Typography variant="h6" className="font-light tracking-wide">Select a report to view analysis</Typography>
+                            <Typography variant="h6" className="font-light tracking-wide">{t('reports.select_prompt')}</Typography>
                         </div>
                     )}
                 </div>

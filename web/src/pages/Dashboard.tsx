@@ -1,25 +1,21 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
     Box,
-    Grid,
     Typography,
     CircularProgress,
     Chip,
     IconButton,
     Paper,
-    useTheme,
-    LinearProgress
 } from '@mui/material';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import BoltIcon from '@mui/icons-material/Bolt';
-import WaterDropIcon from '@mui/icons-material/WaterDrop';
 import PublicIcon from '@mui/icons-material/Public';
 import StorageIcon from '@mui/icons-material/Storage';
 import TimelineIcon from '@mui/icons-material/Timeline';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
-import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import { fetchDashboardOverview } from '../api';
 
 // --- Utility Components ---
@@ -48,6 +44,7 @@ const ColorVal = ({ val, suffix = "", bold = true }: { val: number, suffix?: str
 // --- Page Component ---
 
 export default function DashboardPage() {
+    const { t } = useTranslation();
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
@@ -70,7 +67,7 @@ export default function DashboardPage() {
     }, []);
 
     if (loading && !data) return <Box className="h-screen flex items-center justify-center"><CircularProgress size={24} className="text-slate-400"/></Box>;
-    if (!data) return <Box className="p-10">System Offline</Box>;
+    if (!data) return <Box className="p-10">{t('common.system_offline')}</Box>;
 
     const { market_overview, gold_macro, sectors, abnormal_movements, top_flows, system_stats } = data;
     const breadth = market_overview?.breadth || { up: 0, down: 0, flat: 0, limit_up: 0, limit_down: 0 };
@@ -84,10 +81,10 @@ export default function DashboardPage() {
             <Box className="flex justify-between items-center">
                 <Box className="flex items-center gap-3">
                     <Typography variant="h5" className="font-extrabold text-slate-800 tracking-tight">
-                        Market Overview
+                        {t('dashboard.title')}
                     </Typography>
                     <Chip 
-                        label="LIVE" 
+                        label={t('common.live')} 
                         size="small" 
                         color="success" 
                         className="h-5 text-[10px] font-bold"
@@ -105,17 +102,17 @@ export default function DashboardPage() {
                 <Box className="flex-[0.8] p-5 border-b lg:border-b-0 lg:border-r border-slate-100 flex flex-col justify-between relative overflow-hidden bg-slate-50/50">
                     <StorageIcon className="absolute -right-4 -bottom-4 text-slate-200 opacity-20 text-8xl" />
                     <Box>
-                        <Typography variant="caption" className="text-slate-400 font-bold uppercase tracking-wider">System Reports</Typography>
+                        <Typography variant="caption" className="text-slate-400 font-bold uppercase tracking-wider">{t('dashboard.macro.system_reports')}</Typography>
                         <Box className="flex items-baseline gap-2 mt-1">
                              <Typography variant="h3" className="font-bold text-slate-800 leading-none">
                                 {system_stats?.total}
                             </Typography>
-                             <Typography variant="caption" className="text-slate-400 font-bold">Files</Typography>
+                             <Typography variant="caption" className="text-slate-400 font-bold">{t('dashboard.macro.files')}</Typography>
                         </Box>
                     </Box>
                     <Box className="flex gap-2 mt-2">
-                        <Chip label={`Pre ${system_stats?.breakdown?.pre}`} size="small" className="h-5 text-[10px] bg-indigo-100 text-indigo-700 font-bold border border-indigo-200" />
-                        <Chip label={`Post ${system_stats?.breakdown?.post}`} size="small" className="h-5 text-[10px] bg-purple-100 text-purple-700 font-bold border border-purple-200" />
+                        <Chip label={`${t('dashboard.macro.pre')} ${system_stats?.breakdown?.pre}`} size="small" className="h-5 text-[10px] bg-indigo-100 text-indigo-700 font-bold border border-indigo-200" />
+                        <Chip label={`${t('dashboard.macro.post')} ${system_stats?.breakdown?.post}`} size="small" className="h-5 text-[10px] bg-purple-100 text-purple-700 font-bold border border-purple-200" />
                     </Box>
                 </Box>
 
@@ -140,15 +137,15 @@ export default function DashboardPage() {
                 <Box className="flex-[1.5] p-5 border-b lg:border-b-0 lg:border-r border-slate-100 flex flex-col justify-between">
                      <Box className="flex justify-between items-start mb-2">
                         <Box>
-                             <Typography variant="caption" className="text-slate-400 font-bold uppercase block text-[10px]">Market Sentiment</Typography>
+                             <Typography variant="caption" className="text-slate-400 font-bold uppercase block text-[10px]">{t('dashboard.macro.market_sentiment')}</Typography>
                              <Box className="flex items-baseline gap-1">
-                                <span className="text-red-500 font-bold text-sm">{breadth.up} Up</span>
+                                <span className="text-red-500 font-bold text-sm">{breadth.up} {t('dashboard.macro.up')}</span>
                                 <span className="text-slate-300 text-xs">/</span>
-                                <span className="text-green-500 font-bold text-sm">{breadth.down} Down</span>
+                                <span className="text-green-500 font-bold text-sm">{breadth.down} {t('dashboard.macro.down')}</span>
                              </Box>
                         </Box>
                         <Box className="text-right">
-                             <Typography variant="caption" className="text-slate-400 font-bold uppercase block text-[10px]">Turnover</Typography>
+                             <Typography variant="caption" className="text-slate-400 font-bold uppercase block text-[10px]">{t('dashboard.macro.turnover')}</Typography>
                              <Typography variant="subtitle1" className="font-bold text-slate-800 leading-none">
                                 {market_overview?.turnover?.total}<span className="text-xs font-normal text-slate-400">亿</span>
                             </Typography>
@@ -162,10 +159,10 @@ export default function DashboardPage() {
                     
                     <Box className="flex gap-2 mt-1">
                         <span className="flex-1 text-center text-[10px] font-bold bg-red-50 text-red-600 py-0.5 rounded border border-red-100">
-                            Limit Up {breadth.limit_up}
+                            {t('dashboard.macro.limit_up')} {breadth.limit_up}
                         </span>
                         <span className="flex-1 text-center text-[10px] font-bold bg-green-50 text-green-600 py-0.5 rounded border border-green-100">
-                            Limit Down {breadth.limit_down}
+                            {t('dashboard.macro.limit_down')} {breadth.limit_down}
                         </span>
                     </Box>
                 </Box>
@@ -175,7 +172,7 @@ export default function DashboardPage() {
                     <PublicIcon className="absolute -right-6 -bottom-8 text-amber-500 opacity-10 text-[120px]" />
                     <Box className="relative z-10">
                         <Box className="flex justify-between items-center mb-1">
-                            <Typography variant="caption" className="text-slate-400 font-bold uppercase tracking-wider">Gold</Typography>
+                            <Typography variant="caption" className="text-slate-400 font-bold uppercase tracking-wider">{t('dashboard.macro.gold')}</Typography>
                             <Typography variant="caption" className="text-amber-600 font-bold bg-amber-50 px-1 rounded">XAU</Typography>
                         </Box>
                         <Typography variant="h4" className="font-mono font-bold text-slate-800 tracking-tight">
@@ -203,21 +200,21 @@ export default function DashboardPage() {
                                 <TimelineIcon className="text-indigo-600" fontSize="small"/>
                             </Box>
                             <Box>
-                                <Typography variant="subtitle1" className="font-bold text-slate-800 leading-tight">Smart Money Flow</Typography>
-                                <Typography variant="caption" className="text-slate-400 font-medium">Top Net Inflow Leaders</Typography>
+                                <Typography variant="subtitle1" className="font-bold text-slate-800 leading-tight">{t('dashboard.deep_dive.smart_money')}</Typography>
+                                <Typography variant="caption" className="text-slate-400 font-medium">{t('dashboard.deep_dive.top_inflow')}</Typography>
                             </Box>
                         </Box>
-                        <Chip label={`Main Flow: ${market_overview?.main_flow}亿`} size="small" className="bg-indigo-50 text-indigo-700 font-bold border border-indigo-100" />
+                        <Chip label={`${t('dashboard.deep_dive.main_flow')}: ${market_overview?.main_flow}亿`} size="small" className="bg-indigo-50 text-indigo-700 font-bold border border-indigo-100" />
                     </Box>
                     <Box className="flex-1">
                         <table className="w-full text-sm text-left">
                             <thead className="bg-white text-slate-400 font-medium text-[11px] uppercase tracking-wider border-b border-slate-50">
                                 <tr>
-                                    <th className="px-6 py-4 font-bold bg-slate-50/20">Code</th>
-                                    <th className="px-6 py-4 font-bold bg-slate-50/20">Name</th>
-                                    <th className="px-6 py-4 font-bold bg-slate-50/20 text-right">Net Inflow (亿)</th>
-                                    <th className="px-6 py-4 font-bold bg-slate-50/20 text-right">Change</th>
-                                    <th className="px-6 py-4 font-bold bg-slate-50/20 text-right w-24">Trend</th>
+                                    <th className="px-6 py-4 font-bold bg-slate-50/20">{t('common.code')}</th>
+                                    <th className="px-6 py-4 font-bold bg-slate-50/20">{t('common.name')}</th>
+                                    <th className="px-6 py-4 font-bold bg-slate-50/20 text-right">{t('dashboard.deep_dive.net_inflow')} (亿)</th>
+                                    <th className="px-6 py-4 font-bold bg-slate-50/20 text-right">{t('common.change')}</th>
+                                    <th className="px-6 py-4 font-bold bg-slate-50/20 text-right w-24">{t('common.trend')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
@@ -250,9 +247,9 @@ export default function DashboardPage() {
                         <Box className="px-5 py-3 border-b border-red-50 bg-red-50/20 flex justify-between items-center">
                             <Box className="flex items-center gap-2">
                                 <ArrowDropUpIcon className="text-red-500" />
-                                <Typography variant="subtitle2" className="font-bold text-slate-700">Sector Leaders</Typography>
+                                <Typography variant="subtitle2" className="font-bold text-slate-700">{t('dashboard.deep_dive.sector_leaders')}</Typography>
                             </Box>
-                            <Typography variant="caption" className="text-red-400 font-bold text-[10px] uppercase tracking-wide">Top 5 Gainers</Typography>
+                            <Typography variant="caption" className="text-red-400 font-bold text-[10px] uppercase tracking-wide">{t('dashboard.deep_dive.top_gainers')}</Typography>
                         </Box>
                         <Box className="flex-1">
                             {sectors?.gainers?.slice(0, 5).map((s: any, i: number) => (
@@ -272,9 +269,9 @@ export default function DashboardPage() {
                         <Box className="px-5 py-3 border-b border-green-50 bg-green-50/20 flex justify-between items-center">
                             <Box className="flex items-center gap-2">
                                 <ArrowDropDownIcon className="text-green-500" />
-                                <Typography variant="subtitle2" className="font-bold text-slate-700">Sector Laggards</Typography>
+                                <Typography variant="subtitle2" className="font-bold text-slate-700">{t('dashboard.deep_dive.sector_laggards')}</Typography>
                             </Box>
-                             <Typography variant="caption" className="text-green-400 font-bold text-[10px] uppercase tracking-wide">Top 5 Losers</Typography>
+                             <Typography variant="caption" className="text-green-400 font-bold text-[10px] uppercase tracking-wide">{t('dashboard.deep_dive.top_losers')}</Typography>
                         </Box>
                         <Box className="flex-1">
                             {sectors?.losers?.slice().reverse().slice(0, 5).map((s: any, i: number) => (
@@ -292,19 +289,19 @@ export default function DashboardPage() {
             </Box>
 
             {/* LAYER 3: LIVE SIGNALS */}
-            <Paper elevation={0} className="border border-slate-200 rounded-xl bg-white overflow-hidden flex flex-col shadow-sm min-h-[160px]">
+            <Paper elevation={0} className="border border-slate-200 rounded-xl bg-white overflow-hidden flex flex-col shadow-sm min-h-[180px]">
                 <Box className="px-6 py-3 border-b border-slate-100 bg-amber-50/10 flex justify-between items-center">
                     <Box className="flex items-center gap-2">
                         <BoltIcon className="text-amber-500" />
-                        <Typography variant="subtitle1" className="font-bold text-slate-700">Live Market Signals</Typography>
+                        <Typography variant="subtitle1" className="font-bold text-slate-700">{t('dashboard.signals.title')}</Typography>
                     </Box>
                     <Box className="flex items-center gap-2">
                         <span className="animate-pulse w-2 h-2 rounded-full bg-amber-500"></span>
-                        <Typography variant="caption" className="text-slate-400 font-mono text-[10px]">REAL-TIME</Typography>
+                        <Typography variant="caption" className="text-slate-400 font-mono text-[10px]">{t('dashboard.signals.real_time')}</Typography>
                     </Box>
                 </Box>
                 
-                <Box className="p-5 overflow-x-auto whitespace-nowrap scrollbar-hide flex gap-4 items-center bg-slate-50/30 flex-1">
+                <Box className="p-5 overflow-x-auto whitespace-nowrap scrollbar-hide flex gap-4 items-center bg-slate-50/30 min-h-[120px]">
                     {abnormal_movements?.map((m: any, i: number) => (
                         <Paper key={i} elevation={0} className="inline-block min-w-[220px] p-4 rounded-xl border border-slate-200 bg-white hover:border-amber-300 hover:shadow-md transition-all relative group flex-shrink-0 cursor-default">
                             <Box className="flex justify-between items-start mb-2">
@@ -340,7 +337,7 @@ export default function DashboardPage() {
                     
                     {(!abnormal_movements || abnormal_movements.length === 0) && (
                         <Box className="w-full text-center text-slate-400 text-sm italic">
-                            Waiting for market signals...
+                            {t('dashboard.signals.waiting')}
                         </Box>
                     )}
                 </Box>

@@ -1,0 +1,232 @@
+{
+  "common": {
+    "loading": "加载中...",
+    "live": "实时",
+    "refresh": "刷新",
+    "error": "错误",
+    "system_offline": "系统离线",
+    "waiting": "等待中...",
+    "code": "代码",
+    "name": "名称",
+    "change": "涨跌幅",
+    "trend": "趋势",
+    "search": "搜索",
+    "actions": "操作",
+    "save": "保存",
+    "cancel": "取消",
+    "delete": "删除",
+    "edit": "编辑",
+    "total": "总计",
+    "date": "日期",
+    "type": "类型"
+  },
+  "layout": {
+    "title": "ALPHA",
+    "subtitle": "智能核心",
+    "menu": {
+      "dashboard": "仪表盘",
+      "dashboard_sub": "市场驾驶舱",
+      "universe": "基金池",
+      "universe_sub": "管理投资组合节点",
+      "sentiment": "情绪",
+      "sentiment_sub": "市场情绪分析",
+      "intelligence": "情报",
+      "intelligence_sub": "深度研报",
+      "commodities": "商品",
+      "commodities_sub": "全球资产",
+      "system": "系统",
+      "system_sub": "核心配置"
+    },
+    "user": {
+      "admin": "管理员",
+      "role": "系统主宰"
+    },
+    "footer": {
+      "copyright": "© 2026 VibeAlpha 终端.",
+      "data_source": "数据来源 AkShare & Xueqiu"
+    },
+    "tools": {
+      "sync": "市场网络同步",
+      "version": "核心终端 v2.1"
+    }
+  },
+  "dashboard": {
+    "title": "市场概览",
+    "macro": {
+      "system_reports": "系统研报",
+      "files": "文件",
+      "pre": "盘前",
+      "post": "盘后",
+      "market_sentiment": "市场情绪",
+      "up": "涨",
+      "down": "跌",
+      "turnover": "成交额",
+      "limit_up": "涨停",
+      "limit_down": "跌停",
+      "gold": "黄金"
+    },
+    "deep_dive": {
+      "smart_money": "主力资金流向",
+      "top_inflow": "净流入领跑者",
+      "main_flow": "主力净流入",
+      "net_inflow": "净流入",
+      "sector_leaders": "行业领涨",
+      "top_gainers": "涨幅前5",
+      "sector_laggards": "行业领跌",
+      "top_losers": "跌幅前5"
+    },
+    "signals": {
+      "title": "实时市场信号",
+      "real_time": "实时",
+      "waiting": "等待市场信号..."
+    }
+  },
+  "funds": {
+    "title": "基金宇宙",
+    "subtitle": "活跃投资组合配置与情报",
+    "add_target": "添加标的",
+    "table": {
+      "fund_entity": "基金实体",
+      "strategy": "策略",
+      "sectors": "板块",
+      "auto_schedule": "自动调度",
+      "actions": "操作",
+      "manual_only": "仅手动",
+      "pre": "盘前",
+      "post": "盘后"
+    },
+    "menu": {
+      "view_intelligence": "查看情报",
+      "run_pre": "立即运行盘前",
+      "run_post": "立即运行盘后",
+      "edit_config": "编辑配置",
+      "delete": "删除"
+    },
+    "dialog": {
+      "add_title": "添加新标的",
+      "edit_title": "编辑配置",
+      "market_search": "市场情报搜索",
+      "search_placeholder": "搜索基金代码或名称",
+      "asset_identity": "资产身份",
+      "fund_code": "基金代码",
+      "fund_name": "基金名称",
+      "strategy_config": "策略配置",
+      "style": "风格",
+      "focus_sectors": "关注板块",
+      "schedule": "情报调度 (24H)",
+      "pre_market": "盘前",
+      "post_market": "盘后",
+      "confirm": "确认配置",
+      "cancel": "取消"
+    },
+    "details": {
+      "latest_nav": "最新净值",
+      "manager": "基金经理",
+      "fund_size": "基金规模",
+      "morningstar": "晨星评级",
+      "performance_analytics": "业绩分析",
+      "last_100_days": "过去100个交易日",
+      "historical_reference": "历史参考",
+      "stats_tab": "业绩统计",
+      "nav_tab": "净值走势",
+      "timeframe": "时间范围",
+      "return": "收益率",
+      "rank": "同类排名",
+      "date": "日期",
+      "adj_nav": "复权净值",
+      "core_holdings": "核心持仓",
+      "no_portfolio": "持仓数据受限或不可用",
+      "close": "确认并关闭"
+    },
+    "messages": {
+      "delete_confirm": "确定要从观察列表中移除此基金吗？",
+      "delete_success": "基金已从观察列表移除",
+      "save_success": "基金保存成功",
+      "trigger_success": "情报节点触发成功"
+    }
+  },
+  "sentiment": {
+    "title": "市场情绪",
+    "news": "新闻",
+    "social": "社交媒体",
+    "active": "神经分析活跃",
+    "run_analysis": "运行分析",
+    "timeline": "时间轴",
+    "today": "今天",
+    "no_signals": "无信号记录",
+    "select_sub": "或点击“运行分析”生成新报告",
+    "error_gen": "生成情绪分析失败。",
+    "error_load": "加载报告内容失败。"
+  },
+  "reports": {
+    "title": "情报研报",
+    "library": "情报库",
+    "search_placeholder": "搜索报告...",
+    "daily_briefing": "每日简报",
+    "market_wrap": "市场总结",
+    "strategy_analysis": "策略分析",
+    "performance_review": "业绩回顾",
+    "download_image": "下载图片",
+    "export": "导出",
+    "processing": "处理中...",
+    "market_intelligence": "市场情报",
+    "fund_analysis": "基金分析",
+    "daily_overview": "每日市场概览",
+    "footer_text": "由 EastMoney Pro AI 生成 • 机密",
+    "select_prompt": "选择一份报告以查看分析",
+    "generate": "生成报告",
+    "generating": "生成中...",
+    "types": {
+      "pre_market": "盘前",
+      "post_market": "盘后",
+      "sector_analysis": "板块分析"
+    }
+  },
+  "commodities": {
+    "title": "全球商品",
+    "title_main": "商品情报",
+    "subtitle": "实时战略分析",
+    "gold": "黄金",
+    "silver": "白银",
+    "crude": "原油",
+    "analyzing_gold": "分析黄金中...",
+    "analyze_gold": "分析黄金",
+    "analyzing_silver": "分析白银中...",
+    "analyze_silver": "分析白银",
+    "filter_timeline": "筛选时间轴...",
+    "gold_strategy": "黄金策略",
+    "silver_strategy": "白银策略",
+    "intel_report": "情报报告",
+    "brief": "情报简报",
+    "footer": "由 VIBE_ALPHA AI 核心生成",
+    "select_prompt": "选择一份战略报告以查看详情"
+  },
+  "settings": {
+    "title": "系统配置",
+    "subtitle": "管理您的 AI 智能提供商和外部数据连接。密钥安全存储在您的本地环境中。",
+    "llm": {
+      "title": "智能引擎",
+      "subtitle": "选择并配置驱动分析的大语言模型。",
+      "provider": "活跃提供商",
+      "credentials": "凭证",
+      "gemini_key": "Gemini API 密钥",
+      "openai_key": "OpenAI API 密钥",
+      "provider_help": "选择用于生成报告的 AI 模型。"
+    },
+    "data": {
+      "title": "数据连接",
+      "subtitle": "配置用于网络搜索和市场数据的外部服务。",
+      "tavily_info": "需要 Tavily API 密钥来执行新闻和情绪分析的实时网络搜索。",
+      "tavily_key": "Tavily 搜索 API 密钥"
+    },
+    "save": "保存配置",
+    "saving": "保存中...",
+    "messages": {
+      "success": "配置保存成功",
+      "fail": "保存配置失败"
+    },
+    "language": "语言",
+    "theme": "主题"
+  }
+}
+

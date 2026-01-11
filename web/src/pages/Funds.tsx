@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Typography, 
   Button, 
   Grid, 
-  Card, 
-  CardContent, 
   IconButton, 
   TextField, 
   Dialog, 
@@ -23,7 +22,6 @@ import {
   TableContainer,
   TableRow,
   TableHead,
-  Tooltip as MuiTooltip,
   Tabs,
   Tab,
   Menu,
@@ -36,12 +34,9 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
-import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import HistoryIcon from '@mui/icons-material/History';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import ListAltIcon from '@mui/icons-material/ListAlt';
 import PieChartIcon from '@mui/icons-material/PieChart';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
@@ -62,12 +57,10 @@ import type{MarketFund,FundItem,NavPoint}  from '../api';
 
 
 export default function FundsPage() {
+  const { t } = useTranslation();
   const [funds, setFunds] = useState<FundItem[]>([]);
   const [loading, setLoading] = useState(false);
   
-  // Table State
-  const [searchQuery, setSearchQuery] = useState('');
-
   // Unified Dialog State (Add/Edit)
   const [openDialog, setOpenDialog] = useState(false);
   const [editingFund, setEditingFund] = useState<FundItem | null>(null);
@@ -121,7 +114,7 @@ export default function FundsPage() {
     try {
         showNotify(`Initializing ${mode.toUpperCase()} market intelligence for ${menuFund.code}...`, 'info');
         await generateReport(mode, menuFund.code);
-        showNotify(`Intelligence node ${menuFund.code} triggered successfully. Check reports shortly.`, 'success');
+        showNotify(t('funds.messages.trigger_success'), 'success');
     } catch (error) {
         showNotify(`Failed to trigger intelligence node: ${error}`, 'error');
     }
@@ -169,7 +162,7 @@ export default function FundsPage() {
 
     try {
         await saveFund(updatedFund);
-        showNotify(`Fund ${formCode} saved successfully`, 'success');
+        showNotify(t('funds.messages.save_success'), 'success');
         setOpenDialog(false);
         loadFunds();
     } catch (error) {
@@ -215,10 +208,10 @@ export default function FundsPage() {
   };
 
   const handleDelete = async (code: string) => {
-    if (window.confirm('Are you sure you want to remove this fund from your watch list?')) {
+    if (window.confirm(t('funds.messages.delete_confirm'))) {
       try {
         await deleteFund(code);
-        showNotify('Fund removed from watchlist', 'success');
+        showNotify(t('funds.messages.delete_success'), 'success');
         loadFunds();
       } catch (error) {
         showNotify(`Error removing fund: ${error}`, 'error');
@@ -301,10 +294,10 @@ export default function FundsPage() {
       <div className="flex justify-between items-center">
         <div>
           <Typography variant="h4" className="font-bold text-slate-900" sx={{ fontFamily: 'JetBrains Mono' }}>
-            UNIVERSE
+            {t('funds.title')}
           </Typography>
           <Typography variant="subtitle1" className="text-slate-500 mt-1">
-            Active Portfolio Configuration & Intelligence
+            {t('funds.subtitle')}
           </Typography>
         </div>
         <Button
@@ -320,7 +313,7 @@ export default function FundsPage() {
             '&:hover': { backgroundColor: '#4f46e5' }
           }}
         >
-          Add Target
+          {t('funds.add_target')}
         </Button>
       </div>
 
@@ -333,11 +326,11 @@ export default function FundsPage() {
           <Table sx={{ minWidth: 650 }}>
             <TableHead sx={{ bgcolor: '#f8fafc' }}>
               <TableRow>
-                <TableCell sx={{ color: '#64748b', fontWeight: 800, fontSize: '0.75rem', py: 2 }}>FUND ENTITY</TableCell>
-                <TableCell sx={{ color: '#64748b', fontWeight: 800, fontSize: '0.75rem', py: 2 }}>STRATEGY</TableCell>
-                <TableCell sx={{ color: '#64748b', fontWeight: 800, fontSize: '0.75rem', py: 2 }}>SECTORS</TableCell>
-                <TableCell sx={{ color: '#64748b', fontWeight: 800, fontSize: '0.75rem', py: 2 }}>AUTO SCHEDULE</TableCell>
-                <TableCell align="right" sx={{ color: '#64748b', fontWeight: 800, fontSize: '0.75rem', py: 2 }}>ACTIONS</TableCell>
+                <TableCell sx={{ color: '#64748b', fontWeight: 800, fontSize: '0.75rem', py: 2 }}>{t('funds.table.fund_entity')}</TableCell>
+                <TableCell sx={{ color: '#64748b', fontWeight: 800, fontSize: '0.75rem', py: 2 }}>{t('funds.table.strategy')}</TableCell>
+                <TableCell sx={{ color: '#64748b', fontWeight: 800, fontSize: '0.75rem', py: 2 }}>{t('funds.table.sectors')}</TableCell>
+                <TableCell sx={{ color: '#64748b', fontWeight: 800, fontSize: '0.75rem', py: 2 }}>{t('funds.table.auto_schedule')}</TableCell>
+                <TableCell align="right" sx={{ color: '#64748b', fontWeight: 800, fontSize: '0.75rem', py: 2 }}>{t('funds.table.actions')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -383,11 +376,11 @@ export default function FundsPage() {
                   </TableCell>
                   <TableCell>
                     {(!fund.pre_market_time && !fund.post_market_time) ? (
-                        <Typography sx={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.05em' }}>MANUAL ONLY</Typography>
+                        <Typography sx={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.05em' }}>{t('funds.table.manual_only')}</Typography>
                     ) : (
                         <Box sx={{ display: 'flex', gap: 1 }}>
-                            {fund.pre_market_time && <Chip label={`PRE ${fund.pre_market_time}`} size="small" sx={{ fontSize: '0.6rem', height: '18px', bgcolor: 'rgba(99, 102, 241, 0.05)', color: '#6366f1', fontWeight: 800 }} />}
-                            {fund.post_market_time && <Chip label={`POST ${fund.post_market_time}`} size="small" sx={{ fontSize: '0.6rem', height: '18px', bgcolor: 'rgba(245, 158, 11, 0.05)', color: '#d97706', fontWeight: 800 }} />}
+                            {fund.pre_market_time && <Chip label={`${t('funds.table.pre')} ${fund.pre_market_time}`} size="small" sx={{ fontSize: '0.6rem', height: '18px', bgcolor: 'rgba(99, 102, 241, 0.05)', color: '#6366f1', fontWeight: 800 }} />}
+                            {fund.post_market_time && <Chip label={`${t('funds.table.post')} ${fund.post_market_time}`} size="small" sx={{ fontSize: '0.6rem', height: '18px', bgcolor: 'rgba(245, 158, 11, 0.05)', color: '#d97706', fontWeight: 800 }} />}
                         </Box>
                     )}
                   </TableCell>
@@ -440,36 +433,36 @@ export default function FundsPage() {
       >
         <MenuItem onClick={() => { handleCloseMenu(); if (menuFund) handleViewDetails(menuFund); }} sx={{ py: 1.5 }}>
             <ListItemIcon><AnalyticsIcon fontSize="small" sx={{ color: '#6366f1' }} /></ListItemIcon>    
-            <ListItemText primary="View Intelligence" primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 700 }} />
+            <ListItemText primary={t('funds.menu.view_intelligence')} primaryTypographyProps={{ fontSize: '0.85rem', fontWeight: 700 }} />
         </MenuItem>
         
         <Divider sx={{ my: 0.5, borderColor: '#f1f5f9' }} />
 
         <MenuItem onClick={() => { handleCloseMenu(); handleRunAnalysis('pre'); }} sx={{ py: 1 }}>       
             <ListItemIcon><AssessmentIcon fontSize="small" color="primary" /></ListItemIcon>
-            <ListItemText primary="Run Pre-Market Now" primaryTypographyProps={{ fontSize: '0.85rem', color: '#334155' }} />
+            <ListItemText primary={t('funds.menu.run_pre')} primaryTypographyProps={{ fontSize: '0.85rem', color: '#334155' }} />
         </MenuItem>
         <MenuItem onClick={() => { handleCloseMenu(); handleRunAnalysis('post'); }} sx={{ py: 1 }}>      
             <ListItemIcon><AssessmentIcon fontSize="small" sx={{ color: '#f59e0b' }} /></ListItemIcon>   
-            <ListItemText primary="Run Post-Market Now" primaryTypographyProps={{ fontSize: '0.85rem', color: '#334155' }} />
+            <ListItemText primary={t('funds.menu.run_post')} primaryTypographyProps={{ fontSize: '0.85rem', color: '#334155' }} />
         </MenuItem>
         
         <Divider sx={{ my: 0.5, borderColor: '#f1f5f9' }} />
 
         <MenuItem onClick={() => { handleCloseMenu(); if (menuFund) handleOpenDialog(menuFund); }} sx={{ py: 1 }}>
             <ListItemIcon><EditIcon fontSize="small" sx={{ color: '#64748b' }} /></ListItemIcon>
-            <ListItemText primary="Edit Config" primaryTypographyProps={{ fontSize: '0.85rem', color: '#334155' }} />
+            <ListItemText primary={t('funds.menu.edit_config')} primaryTypographyProps={{ fontSize: '0.85rem', color: '#334155' }} />
         </MenuItem>
         <MenuItem onClick={() => { handleCloseMenu(); if (menuFund) handleDelete(menuFund.code); }} sx={{ py: 1 }}>
             <ListItemIcon><DeleteIcon fontSize="small" color="error" /></ListItemIcon>
-            <ListItemText primary="Delete" primaryTypographyProps={{ fontSize: '0.85rem', color: '#f43f5e', fontWeight: 700 }} />
+            <ListItemText primary={t('funds.menu.delete')} primaryTypographyProps={{ fontSize: '0.85rem', color: '#f43f5e', fontWeight: 700 }} />
         </MenuItem>
       </Menu>
 
       {/* Add/Edit Fund Dialog */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 800, borderBottom: '1px solid #f1f5f9' }}>
-            {editingFund ? 'Edit Configuration' : 'Add New Target'}
+            {editingFund ? t('funds.dialog.edit_title') : t('funds.dialog.add_title')}
         </DialogTitle>
         <DialogContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 3 }}>
@@ -477,7 +470,7 @@ export default function FundsPage() {
                 {/* 1. Market Search (Only for new targets) */}
                 {!editingFund && (
                     <Box>
-                        <Typography variant="overline" sx={{ color: '#64748b', fontWeight: 800, mb: 1, display: 'block' }}>Market Intelligence Search</Typography>
+                        <Typography variant="overline" sx={{ color: '#64748b', fontWeight: 800, mb: 1, display: 'block' }}>{t('funds.dialog.market_search')}</Typography>
                         <Autocomplete
                             fullWidth
                             onInputChange={(_, value) => handleSearch(value)}
@@ -488,7 +481,7 @@ export default function FundsPage() {
                             renderInput={(params) => (
                             <TextField
                                 {...params}
-                                label="Search Fund Code or Name"
+                                label={t('funds.dialog.search_placeholder')}
                                 variant="outlined"
                                 size="small"
                                 InputProps={{
@@ -514,11 +507,11 @@ export default function FundsPage() {
 
                 {/* 2. Asset Identity */}
                 <Box>
-                    <Typography variant="overline" sx={{ color: '#64748b', fontWeight: 800, mb: 1, display: 'block' }}>Asset Identity</Typography>
+                    <Typography variant="overline" sx={{ color: '#64748b', fontWeight: 800, mb: 1, display: 'block' }}>{t('funds.dialog.asset_identity')}</Typography>
                     <Grid container spacing={2}>
-                        <Grid item xs={4}>
+                        <Grid xs={4}>
                             <TextField
-                                label="Fund Code"
+                                label={t('funds.dialog.fund_code')}
                                 fullWidth
                                 size="small"
                                 value={formCode}
@@ -527,9 +520,9 @@ export default function FundsPage() {
                                 placeholder="000000"
                             />
                         </Grid>
-                        <Grid item xs={8}>
+                        <Grid xs={8}>
                             <TextField
-                                label="Fund Name"
+                                label={t('funds.dialog.fund_name')}
                                 fullWidth
                                 size="small"
                                 value={formName}
@@ -542,11 +535,11 @@ export default function FundsPage() {
 
                 {/* 3. Strategy Configuration */}
                 <Box>
-                    <Typography variant="overline" sx={{ color: '#64748b', fontWeight: 800, mb: 1, display: 'block' }}>Strategy Configuration</Typography>
+                    <Typography variant="overline" sx={{ color: '#64748b', fontWeight: 800, mb: 1, display: 'block' }}>{t('funds.dialog.strategy_config')}</Typography>
                     <Grid container spacing={2}>
-                        <Grid item xs={6}>
+                        <Grid xs={6}>
                             <TextField
-                                label="Style"
+                                label={t('funds.dialog.style')}
                                 fullWidth
                                 size="small"
                                 value={formStyle}
@@ -554,9 +547,9 @@ export default function FundsPage() {
                                 placeholder="Growth, Sector, etc."
                             />
                         </Grid>
-                        <Grid item xs={6}>
+                        <Grid xs={6}>
                             <TextField
-                                label="Focus Sectors"
+                                label={t('funds.dialog.focus_sectors')}
                                 fullWidth
                                 size="small"
                                 value={formFocus}
@@ -571,12 +564,12 @@ export default function FundsPage() {
                 {/* 4. Automation Windows */}
                 <Box sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: '12px', border: '1px dashed #e2e8f0' }}>
                     <Typography variant="overline" sx={{ color: '#64748b', fontWeight: 800, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <HistoryIcon sx={{ fontSize: 16 }} /> Intelligence Schedule (24H)
+                        <HistoryIcon sx={{ fontSize: 16 }} /> {t('funds.dialog.schedule')}
                     </Typography>
                     <Grid container spacing={2}>
-                        <Grid item xs={6}>
+                        <Grid xs={6}>
                             <TextField
-                                label="Pre-Market"
+                                label={t('funds.dialog.pre_market')}
                                 type="time"
                                 fullWidth
                                 size="small"
@@ -585,9 +578,9 @@ export default function FundsPage() {
                                 InputLabelProps={{ shrink: true }}
                             />
                         </Grid>
-                        <Grid item xs={6}>
+                        <Grid xs={6}>
                             <TextField
-                                label="Post-Market"
+                                label={t('funds.dialog.post_market')}
                                 type="time"
                                 fullWidth
                                 size="small"
@@ -601,13 +594,13 @@ export default function FundsPage() {
             </Box>
         </DialogContent>
         <DialogActions sx={{ p: 3, borderTop: '1px solid #f1f5f9' }}>
-          <Button onClick={() => setOpenDialog(false)} sx={{ color: '#64748b', fontWeight: 700 }}>Cancel</Button>
+          <Button onClick={() => setOpenDialog(false)} sx={{ color: '#64748b', fontWeight: 700 }}>{t('funds.dialog.cancel')}</Button>
           <Button 
             onClick={handleSave} 
             variant="contained" 
             sx={{ bgcolor: '#6366f1', fontWeight: 800, borderRadius: '8px', px: 4, '&:hover': { bgcolor: '#4f46e5' } }}
           >
-            Confirm Configuration
+            {t('funds.dialog.confirm')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -657,7 +650,7 @@ export default function FundsPage() {
                 </Box>
               </Box>
               <Box sx={{ textAlign: 'right', minWidth: '120px' }}>
-                <Typography sx={{ color: '#6366f1', fontSize: '0.7rem', fontWeight: 900, mb: 0.5, letterSpacing: '0.1em' }}>LATEST NAV</Typography>
+                <Typography sx={{ color: '#6366f1', fontSize: '0.7rem', fontWeight: 900, mb: 0.5, letterSpacing: '0.1em' }}>{t('funds.details.latest_nav')}</Typography>
                 <Typography variant="h4" sx={{ color: '#0f172a', fontWeight: 900, fontFamily: 'JetBrains Mono', lineHeight: 1 }}>
                     {fundDetails?.info?.nav && typeof fundDetails.info.nav !== 'object' && fundDetails.info.nav !== "---" 
                       ? fundDetails.info.nav 
@@ -669,11 +662,11 @@ export default function FundsPage() {
             {/* Quick Metadata Grid */}
             <Grid container spacing={2} sx={{ mt: 1 }}>
                  {[
-                   { label: 'MANAGER', value: fundDetails?.info?.manager },
-                   { label: 'FUND SIZE', value: fundDetails?.info?.size },
-                   { label: 'MORNINGSTAR', value: fundDetails?.info?.rating },
+                   { label: t('funds.details.manager'), value: fundDetails?.info?.manager },
+                   { label: t('funds.details.fund_size'), value: fundDetails?.info?.size },
+                   { label: t('funds.details.morningstar'), value: fundDetails?.info?.rating },
                  ].map((item, i) => (
-                   <Grid item xs={4} key={i}>
+                   <Grid xs={4} key={i}>
                       <Typography sx={{ color: '#94a3b8', fontSize: '0.65rem', fontWeight: 800, mb: 0.5 }}>{item.label}</Typography>
                       <Typography sx={{ color: '#334155', fontSize: '0.75rem', fontWeight: 700 }}>
                         {item.value && typeof item.value !== 'object' ? item.value : '---'}
@@ -697,9 +690,9 @@ export default function FundsPage() {
               <Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Typography variant="overline" sx={{ color: '#0f172a', fontWeight: 900, fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <TrendingUpIcon sx={{ fontSize: 18, color: '#6366f1' }} /> Performance Analytics
+                        <TrendingUpIcon sx={{ fontSize: 18, color: '#6366f1' }} /> {t('funds.details.performance_analytics')}
                     </Typography>
-                    <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 700 }}>Last 100 Trading Days</Typography>
+                    <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 700 }}>{t('funds.details.last_100_days')}</Typography>
                 </Box>
                 <Box sx={{ p: 2.5, borderRadius: '16px', border: '1px solid #f1f5f9', bgcolor: '#fcfcfc', boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.02)' }}>
                     {renderMiniChart(navHistory)}
@@ -709,7 +702,7 @@ export default function FundsPage() {
               {/* 2. Statistical Data Tabs */}
               <Box>
                 <Typography variant="overline" sx={{ color: '#0f172a', fontWeight: 900, fontSize: '0.75rem', mb: 2, display: 'block' }}>
-                    Historical Reference
+                    {t('funds.details.historical_reference')}
                 </Typography>
                 <Tabs 
                     value={detailTab} 
@@ -723,8 +716,8 @@ export default function FundsPage() {
                         '& .MuiTabs-indicator': { bgcolor: '#6366f1', height: 3, borderRadius: '3px 3px 0 0' }
                     }}
                 >
-                    <Tab label="Performance Stats" />
-                    <Tab label="NAV Timeline" />
+                    <Tab label={t('funds.details.stats_tab')} />
+                    <Tab label={t('funds.details.nav_tab')} />
                 </Tabs>
 
                 {detailTab === 0 ? (
@@ -732,9 +725,9 @@ export default function FundsPage() {
                         <Table size="small">
                             <TableHead sx={{ bgcolor: '#f8fafc' }}>
                                 <TableRow>
-                                    <TableCell sx={{ color: '#64748b', fontWeight: 800, fontSize: '0.7rem' }}>TIMEFRAME</TableCell>
-                                    <TableCell align="right" sx={{ color: '#64748b', fontWeight: 800, fontSize: '0.7rem' }}>RETURN</TableCell>
-                                    <TableCell align="right" sx={{ color: '#64748b', fontWeight: 800, fontSize: '0.7rem' }}>RANK</TableCell>
+                                    <TableCell sx={{ color: '#64748b', fontWeight: 800, fontSize: '0.7rem' }}>{t('funds.details.timeframe')}</TableCell>
+                                    <TableCell align="right" sx={{ color: '#64748b', fontWeight: 800, fontSize: '0.7rem' }}>{t('funds.details.return')}</TableCell>
+                                    <TableCell align="right" sx={{ color: '#64748b', fontWeight: 800, fontSize: '0.7rem' }}>{t('funds.details.rank')}</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -760,8 +753,8 @@ export default function FundsPage() {
                         <Table size="small" stickyHeader>
                             <TableHead>
                                 <TableRow>
-                                    <TableCell sx={{ bgcolor: '#f8fafc', color: '#64748b', fontWeight: 800, fontSize: '0.7rem' }}>DATE</TableCell>
-                                    <TableCell align="right" sx={{ bgcolor: '#f8fafc', color: '#64748b', fontWeight: 800, fontSize: '0.7rem' }}>ADJ. NAV</TableCell>
+                                    <TableCell sx={{ bgcolor: '#f8fafc', color: '#64748b', fontWeight: 800, fontSize: '0.7rem' }}>{t('funds.details.date')}</TableCell>
+                                    <TableCell align="right" sx={{ bgcolor: '#f8fafc', color: '#64748b', fontWeight: 800, fontSize: '0.7rem' }}>{t('funds.details.adj_nav')}</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -782,7 +775,7 @@ export default function FundsPage() {
               {/* 3. Strategic Holdings Section */}
               <Box sx={{ mb: 2 }}>
                 <Typography variant="overline" sx={{ color: '#0f172a', fontWeight: 900, fontSize: '0.75rem', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <PieChartIcon sx={{ fontSize: 18, color: '#6366f1' }} /> Core Strategic Holdings
+                    <PieChartIcon sx={{ fontSize: 18, color: '#6366f1' }} /> {t('funds.details.core_holdings')}
                 </Typography>
                 {fundDetails.portfolio && fundDetails.portfolio.length > 0 ? (
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
@@ -816,7 +809,7 @@ export default function FundsPage() {
                 ) : (
                     <Box sx={{ py: 6, textAlign: 'center', bgcolor: '#f8fafc', borderRadius: '16px', border: '1px dashed #e2e8f0' }}>
                         <PieChartIcon sx={{ fontSize: 32, color: '#e2e8f0', mb: 1 }} />
-                        <Typography sx={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: 700 }}>Portfolio data restricted or unavailable</Typography>
+                        <Typography sx={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: 700 }}>{t('funds.details.no_portfolio')}</Typography>
                     </Box>
                 )}
               </Box>
@@ -845,7 +838,7 @@ export default function FundsPage() {
                 '&:hover': { bgcolor: '#1e293b', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }
             }}
           >
-            Acknowledge & Close
+            {t('funds.details.close')}
           </Button>
         </DialogActions>
       </Dialog>

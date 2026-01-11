@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Typography, 
   Button, 
@@ -11,8 +12,7 @@ import {
   ListItemButton,
   ListItemText,
   ListSubheader,
-  Tooltip,
-  Chip
+  Tooltip
 } from '@mui/material';
 import AutoGraphIcon from '@mui/icons-material/AutoGraph';
 import HistoryIcon from '@mui/icons-material/History';
@@ -27,6 +27,7 @@ import { runSentimentAnalysis, fetchSentimentReports, fetchReportContent } from 
 import type { SentimentReportItem } from '../api';
 
 export default function SentimentPage() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
   const [report, setReport] = useState<string | null>(null);
@@ -82,7 +83,7 @@ export default function SentimentPage() {
       await loadHistory(); 
     } catch (err) {
       console.error(err);
-      setError('Failed to generate sentiment analysis. Please check the backend logs.');
+      setError(t('sentiment.error_gen'));
     } finally {
       setAnalyzing(false);
     }
@@ -97,7 +98,7 @@ export default function SentimentPage() {
       setReport(content);
     } catch (err) {
       console.error(err);
-      setError('Failed to load report content.');
+      setError(t('sentiment.error_load'));
     } finally {
       setLoading(false);
     }
@@ -147,12 +148,12 @@ export default function SentimentPage() {
             <PsychologyIcon sx={{ color: '#6366f1', fontSize: 28 }} />
             <div>
                 <Typography variant="h6" className="font-bold text-slate-800 tracking-tight" sx={{ lineHeight: 1.2 }}>
-                    Market Sentiment
+                    {t('sentiment.title')}
                 </Typography>
                 <div className="flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
                     <Typography variant="caption" className="text-slate-400 font-medium text-[10px] uppercase tracking-wider">
-                        Neural Analysis Active
+                        {t('sentiment.active')}
                     </Typography>
                 </div>
             </div>
@@ -176,7 +177,7 @@ export default function SentimentPage() {
                     '&:hover': { bgcolor: '#f8fafc', borderColor: '#cbd5e1' }
                 }}
             >
-                {analyzing ? 'Processing...' : 'Run Analysis'}
+                {analyzing ? t('reports.processing') : t('sentiment.run_analysis')}
             </Button>
         </Box>
       </div>
@@ -187,7 +188,7 @@ export default function SentimentPage() {
           <div className="p-4 border-b border-slate-100 bg-slate-50 sticky top-0 z-10">
              <div className="flex items-center text-slate-500">
                 <HistoryIcon fontSize="small" className="mr-2"/>
-                <Typography variant="subtitle2" fontWeight="700" sx={{ letterSpacing: '0.05em' }}>TIMELINE</Typography>
+                <Typography variant="subtitle2" fontWeight="700" sx={{ letterSpacing: '0.05em' }}>{t('sentiment.timeline')}</Typography>
              </div>
           </div>
           
@@ -203,7 +204,7 @@ export default function SentimentPage() {
                             lineHeight: '40px',
                             fontFamily: 'JetBrains Mono'
                         }}>
-                            {dateLabel === new Date().toLocaleDateString() ? 'TODAY' : dateLabel}
+                            {dateLabel === new Date().toLocaleDateString() ? t('sentiment.today') : dateLabel}
                         </ListSubheader>
                         {items.map((item) => {
                             // Extract time from date string if possible
@@ -251,7 +252,7 @@ export default function SentimentPage() {
             
             {history.length === 0 && (
               <div className="p-8 text-center">
-                <Typography sx={{ color: '#cbd5e1', fontSize: '0.8rem', fontWeight: 600 }}>No signals recorded.</Typography>
+                <Typography sx={{ color: '#cbd5e1', fontSize: '0.8rem', fontWeight: 600 }}>{t('sentiment.no_signals')}</Typography>
               </div>
             )}
           </List>
@@ -268,7 +269,7 @@ export default function SentimentPage() {
           {/* Export Bar */}
           {report && !loading && (
             <div className="flex justify-end mb-4">
-                <Tooltip title="Download Image">
+                <Tooltip title={t('reports.download_image')}>
                     <Button
                         variant="outlined"
                         size="small"
@@ -277,7 +278,7 @@ export default function SentimentPage() {
                         disabled={exporting}
                         className="border-slate-300 text-slate-600 hover:bg-slate-50 hover:border-slate-400"
                     >
-                        {exporting ? 'Processing...' : 'Export Image'}
+                        {exporting ? t('reports.processing') : t('reports.export')}
                     </Button>
                 </Tooltip>
             </div>
@@ -325,7 +326,7 @@ export default function SentimentPage() {
                   {/* Footer for Export */}
                   <div className="mt-8 pt-4 border-t border-slate-100 text-center">
                       <Typography variant="caption" className="text-slate-400 font-mono text-[10px] tracking-widest uppercase">
-                          Generated by EastMoney Pro AI • Confidential • {new Date().getFullYear()}
+                          {t('reports.footer_text')} • {new Date().getFullYear()}
                       </Typography>
                   </div>
                 </Paper>
@@ -345,10 +346,10 @@ export default function SentimentPage() {
                 >
                   <ArticleIcon sx={{ fontSize: 48, mb: 2, color: '#94a3b8' }} />
                   <Typography variant="h6" sx={{ color: '#64748b', fontWeight: 600 }}>
-                    Select a report to view
+                    {t('reports.select_prompt')}
                   </Typography>
                   <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-                    or click "Run Analysis" to generate a new one
+                    {t('sentiment.select_sub')}
                   </Typography>
                 </Box>
               )}

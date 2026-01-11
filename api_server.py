@@ -406,9 +406,23 @@ async def generate_report_endpoint(mode: str, request: GenerateRequest = None):
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
+# --- Cache ---
+_INDICES_CACHE = {
+    "data": [],
+    "expiry": 0
+}
+
 @app.get("/api/market/indices")
 def get_market_indices():
     """获取主要市场指数实时快照 (使用全球指数接口)"""
+    import time
+    global _INDICES_CACHE
+    
+    # Check cache
+    now = time.time()
+    if _INDICES_CACHE["data"] and now < _INDICES_CACHE["expiry"]:
+        return _INDICES_CACHE["data"]
+
     try:
         import akshare as ak
         # 获取全球指数行情快照
@@ -431,9 +445,19 @@ def get_market_indices():
                     "change_val": float(row.iloc[0]['涨跌额'])
                 })
         
-        return sanitize_data(results)
+        data = sanitize_data(results)
+        
+        # Update cache (60s TTL)
+        if data:
+            _INDICES_CACHE["data"] = data
+            _INDICES_CACHE["expiry"] = now + 60
+            
+        return data
     except Exception as e:
         print(f"Error fetching indices via index_global_spot_em: {e}")
+        # Return stale data if available on error
+        if _INDICES_CACHE["data"]:
+            return _INDICES_CACHE["data"]
         return []
 
 @app.get("/api/funds")
@@ -750,7 +774,14 @@ async def get_fund_nav_history(code: str):
 
 if __name__ == "__main__":
     import uvicorn
+    import argparse
+
+    parser = argparse.ArgumentParser(description="EastMoney API Server")
+    parser.add_argument("--host", type=str, default="0.0.0.0", help="Host to bind")
+    parser.add_argument("--port", type=int, default=8000, help="Port to bind")
+    args = parser.parse_args()
+
     # Need to run init_db if running directly without lifespan
     init_db()
     scheduler_manager.start()
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host=args.host, port=args.port)

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Typography, 
   TextField,
@@ -24,6 +25,7 @@ import { fetchSettings, saveSettings } from '../api';
 import type { SettingsData } from '../api';
 
 export default function SettingsPage() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<SettingsData>({
@@ -67,13 +69,13 @@ export default function SettingsPage() {
             openai_api_key: openaiKey || undefined,
             tavily_api_key: tavilyKey || undefined
         });
-        setToast({ open: true, message: 'Configuration saved successfully', severity: 'success' });
+        setToast({ open: true, message: t('settings.messages.success'), severity: 'success' });
         setGeminiKey('');
         setOpenaiKey('');
         setTavilyKey('');
         await loadSettings();
     } catch (error) {
-        setToast({ open: true, message: 'Failed to save configuration', severity: 'error' });
+        setToast({ open: true, message: t('settings.messages.fail'), severity: 'error' });
     } finally {
         setSaving(false);
     }
@@ -90,11 +92,10 @@ export default function SettingsPage() {
       {/* Header */}
       <div className="mb-10">
         <Typography variant="h4" align="center" className="text-slate-900 font-extrabold tracking-tight mb-2">
-            System Configuration
+            {t('settings.title')}
         </Typography>
         <Typography variant="body1" align="center" className="text-slate-500 max-w-xl mx-auto">
-            Manage your AI intelligence providers and external data connections. 
-            Keys are stored securely in your local environment.
+            {t('settings.subtitle')}
         </Typography>
       </div>
 
@@ -107,8 +108,8 @@ export default function SettingsPage() {
                         <PsychologyIcon fontSize="large" />
                     </div>
                 }
-                title={<Typography variant="h6" className="text-slate-900 font-bold">Intelligence Engine</Typography>}
-                subheader={<span className="text-slate-500">Select and configure the Large Language Model driving the analysis.</span>}
+                title={<Typography variant="h6" className="text-slate-900 font-bold">{t('settings.llm.title')}</Typography>}
+                subheader={<span className="text-slate-500">{t('settings.llm.subtitle')}</span>}
                 className="pb-0"
             />
             <CardContent className="p-6 md:p-8">
@@ -116,12 +117,12 @@ export default function SettingsPage() {
                     <div>
                          <TextField 
                             fullWidth 
-                            label="Active Provider" 
+                            label={t('settings.llm.provider')}
                             value={settings.llm_provider}
                             onChange={(e) => setSettings({...settings, llm_provider: e.target.value})}
                             select 
                             variant="outlined"
-                            helperText="Choose the AI model used for report generation."
+                            helperText={t('settings.llm.provider_help')}
                             sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#ffffff' } }}
                         >
                             <MenuItem value="gemini">Google Gemini (Recommended)</MenuItem>
@@ -131,14 +132,14 @@ export default function SettingsPage() {
                     
                     <div>
                         <Divider className="border-slate-200 mb-2">
-                            <Chip label="Credentials" size="small" className="bg-slate-100 text-slate-500 font-mono text-xs uppercase tracking-wider" />
+                            <Chip label={t('settings.llm.credentials')} size="small" className="bg-slate-100 text-slate-500 font-mono text-xs uppercase tracking-wider" />
                         </Divider>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <TextField 
                             fullWidth 
-                            label="Gemini API Key"
+                            label={t('settings.llm.gemini_key')}
                             type="password" 
                             placeholder={settings.gemini_api_key_masked || "Enter AIza..."}
                             value={geminiKey}
@@ -154,7 +155,7 @@ export default function SettingsPage() {
                         />
                          <TextField 
                             fullWidth 
-                            label="OpenAI API Key"
+                            label={t('settings.llm.openai_key')}
                             type="password" 
                             placeholder={settings.openai_api_key_masked || "Enter sk-..."}
                             value={openaiKey}
@@ -181,19 +182,19 @@ export default function SettingsPage() {
                         <LanguageIcon fontSize="large" />
                     </div>
                 }
-                title={<Typography variant="h6" className="text-slate-900 font-bold">Data Connections</Typography>}
-                subheader={<span className="text-slate-500">Configure external services for web search and market data.</span>}
+                title={<Typography variant="h6" className="text-slate-900 font-bold">{t('settings.data.title')}</Typography>}
+                subheader={<span className="text-slate-500">{t('settings.data.subtitle')}</span>}
                 className="pb-0"
             />
             <CardContent className="p-6 md:p-8">
                 <div className="grid grid-cols-1 gap-6">
                     <div>
                         <Alert severity="info" icon={<InfoOutlinedIcon />} className="bg-blue-50 text-blue-800 border border-blue-100 mb-6">
-                            A Tavily API key is required to perform real-time web searches for news and sentiment analysis.
+                            {t('settings.data.tavily_info')}
                         </Alert>
                         <TextField 
                             fullWidth 
-                            label="Tavily Search API Key" 
+                            label={t('settings.data.tavily_key')}
                             type="password"
                             placeholder={settings.tavily_api_key_masked || "Enter tvly-..."}
                             value={tavilyKey}
@@ -220,7 +221,7 @@ export default function SettingsPage() {
                 disabled={saving}
                 className="px-10 py-3 rounded-lg text-lg font-bold bg-primary hover:bg-primary-dark shadow-lg shadow-blue-500/20"
             >
-                {saving ? 'Saving Changes...' : 'Save Configuration'}
+                {saving ? t('settings.saving') : t('settings.save')}
             </Button>
         </div>
       </div>

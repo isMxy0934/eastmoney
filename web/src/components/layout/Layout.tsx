@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { 
   Drawer, 
   List, 
@@ -12,7 +13,9 @@ import {
   Divider,
   Avatar,
   Tooltip,
-  IconButton
+  IconButton,
+  Menu,
+  MenuItem
 } from '@mui/material';
 import PieChartIcon from '@mui/icons-material/PieChart';
 import ArticleIcon from '@mui/icons-material/Article';
@@ -25,25 +28,40 @@ import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import SpeedIcon from '@mui/icons-material/Speed';
+import LanguageIcon from '@mui/icons-material/Language';
 
 import { fetchMarketIndices,  } from '../../api';
 import type {IndexData} from '../../api';
 
 const drawerWidth = 260;
 
-const MENU_ITEMS = [
-  { text: 'Dashboard', icon: <SpeedIcon />, path: '/dashboard', subtitle: 'Market cockpit' },
-  { text: 'Universe', icon: <PieChartIcon />, path: '/funds', subtitle: 'Manage portfolio nodes' },
-  { text: 'Sentiment', icon: <AutoGraphIcon />, path: '/sentiment', subtitle: 'Market vibe analysis' },
-  { text: 'Intelligence', icon: <ArticleIcon />, path: '/reports', subtitle: 'Deep dive reports' },
-  { text: 'Commodities', icon: <MonetizationOnIcon />, path: '/commodities', subtitle: 'Global assets' },
-  { text: 'System', icon: <SettingsIcon />, path: '/settings', subtitle: 'Core configuration' },
-];
-
 export default function Layout() {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
   const [indices, setIndices] = useState<IndexData[]>([]);
+  
+  // Language Menu State
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleClose = (lang?: string) => {
+    if (lang) {
+      i18n.changeLanguage(lang);
+    }
+    setAnchorEl(null);
+  };
+
+  const MENU_ITEMS = useMemo(() => [
+    { text: t('layout.menu.dashboard'), icon: <SpeedIcon />, path: '/dashboard', subtitle: t('layout.menu.dashboard_sub') },
+    { text: t('layout.menu.universe'), icon: <PieChartIcon />, path: '/funds', subtitle: t('layout.menu.universe_sub') },
+    { text: t('layout.menu.sentiment'), icon: <AutoGraphIcon />, path: '/sentiment', subtitle: t('layout.menu.sentiment_sub') },
+    { text: t('layout.menu.intelligence'), icon: <ArticleIcon />, path: '/reports', subtitle: t('layout.menu.intelligence_sub') },
+    { text: t('layout.menu.commodities'), icon: <MonetizationOnIcon />, path: '/commodities', subtitle: t('layout.menu.commodities_sub') },
+    { text: t('layout.menu.system'), icon: <SettingsIcon />, path: '/settings', subtitle: t('layout.menu.system_sub') },
+  ], [t]);
 
   useEffect(() => {
     const loadIndices = async () => {
@@ -82,11 +100,11 @@ export default function Layout() {
           <img src="/vite.svg" alt="Logo" className="w-8 h-8 mr-3 shadow-sm rounded-xl" />
           <div className="flex flex-col">
             <Typography variant="h6" className="tracking-wide font-bold text-slate-900 leading-none" sx={{ fontFamily: 'JetBrains Mono' }}>
-              V<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600">ALPHA</span>
+              V<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-purple-600">{t('layout.title')}</span>
             </Typography>
-            <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 700, fontSize: '0.6rem', mt: 0.5, letterSpacing: '0.1em' }}>
-              INTELLIGENCE CORE
-            </Typography>
+            {/* <Typography variant="caption" sx={{ color: '#94a3b8', fontWeight: 700, fontSize: '0.6rem', mt: 0.5, letterSpacing: '0.1em' }}>
+              {t('layout.subtitle')}
+            </Typography> */}
           </div>
         </div>
         
@@ -95,7 +113,7 @@ export default function Layout() {
             {MENU_ITEMS.map((item) => {
                const isActive = location.pathname.startsWith(item.path);
                return (
-                <ListItem key={item.text} disablePadding>
+                <ListItem key={item.path} disablePadding>
                   <ListItemButton 
                     selected={isActive}
                     onClick={() => navigate(item.path)}
@@ -143,8 +161,8 @@ export default function Layout() {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 1.5, bgcolor: '#f8fafc', borderRadius: '12px' }}>
                 <Avatar sx={{ width: 32, height: 32, bgcolor: '#6366f1', fontSize: '0.8rem', fontWeight: 800 }}>A</Avatar>
                 <Box>
-                    <Typography sx={{ fontSize: '0.75rem', fontWeight: 800, color: '#1e293b' }}>Administrator</Typography>
-                    <Typography sx={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 600 }}>System Master</Typography>
+                    <Typography sx={{ fontSize: '0.75rem', fontWeight: 800, color: '#1e293b' }}>{t('layout.user.admin')}</Typography>
+                    <Typography sx={{ fontSize: '0.65rem', color: '#94a3b8', fontWeight: 600 }}>{t('layout.user.role')}</Typography>
                 </Box>
             </Box>
         </Box>
@@ -221,16 +239,69 @@ export default function Layout() {
 
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Divider orientation="vertical" flexItem sx={{ height: 24, mx: 1, borderColor: '#f1f5f9' }} />
-                    <Tooltip title="Market Network Sync">
+                    <Tooltip title={t('layout.tools.sync')}>
                         <IconButton size="small" sx={{ color: '#94a3b8', '&:hover': { color: '#6366f1', bgcolor: '#f8fafc' } }}>
                             <PublicIcon fontSize="small" />
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title="Core Terminal v2.1">
+                    <Tooltip title={t('layout.tools.version')}>
                         <IconButton size="small" sx={{ color: '#94a3b8', '&:hover': { color: '#6366f1', bgcolor: '#f8fafc' } }}>
                             <WifiTetheringIcon fontSize="small" />
                         </IconButton>
                     </Tooltip>
+                    
+                    {/* Language Switcher */}
+                    <Tooltip title="Switch Language">
+                        <IconButton 
+                            size="small" 
+                            onClick={handleClick}
+                            sx={{ color: '#94a3b8', '&:hover': { color: '#6366f1', bgcolor: '#f8fafc' }, ml: 1 }}
+                        >
+                            <LanguageIcon fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+                    <Menu
+                        anchorEl={anchorEl}
+                        open={open}
+                        onClose={() => handleClose()}
+                        onClick={() => handleClose()}
+                        PaperProps={{
+                            elevation: 0,
+                            sx: {
+                                overflow: 'visible',
+                                filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.1))',
+                                mt: 1.5,
+                                '& .MuiAvatar-root': {
+                                    width: 32,
+                                    height: 32,
+                                    ml: -0.5,
+                                    mr: 1,
+                                },
+                                '&:before': {
+                                    content: '""',
+                                    display: 'block',
+                                    position: 'absolute',
+                                    top: 0,
+                                    right: 14,
+                                    width: 10,
+                                    height: 10,
+                                    bgcolor: 'background.paper',
+                                    transform: 'translateY(-50%) rotate(45deg)',
+                                    zIndex: 0,
+                                },
+                            },
+                        }}
+                        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                    >
+                        <MenuItem onClick={() => handleClose('en')} selected={i18n.resolvedLanguage === 'en'}>
+                            English
+                        </MenuItem>
+                        <MenuItem onClick={() => handleClose('zh')} selected={i18n.resolvedLanguage === 'zh'}>
+                            中文 (Chinese)
+                        </MenuItem>
+                    </Menu>
+
                 </Box>
             </Box>
         </Box>
@@ -252,11 +323,11 @@ export default function Layout() {
         }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Typography sx={{ color: '#94a3b8', fontSize: '0.7rem', fontWeight: 600 }}>
-                    © 2026 VibeAlpha Terminal.
+                    {t('layout.footer.copyright')}
                 </Typography>
                 <Typography sx={{ color: '#cbd5e1', fontSize: '0.7rem' }}>|</Typography>
                 <Typography sx={{ color: '#94a3b8', fontSize: '0.7rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    Data by <span className="text-indigo-400 font-bold">AkShare & Xueqiu</span> <InfoOutlinedIcon sx={{ fontSize: 12 }} />
+                    {t('layout.footer.data_source')} <InfoOutlinedIcon sx={{ fontSize: 12 }} />
                 </Typography>
             </Box>
         </Box>

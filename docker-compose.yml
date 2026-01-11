@@ -1,0 +1,37 @@
+services:
+  # 后端服务
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    container_name: eastmoney-backend
+    restart: unless-stopped
+    volumes:
+      # 挂载数据卷以持久化数据
+      - ./funds.db:/app/funds.db
+      - ./reports:/app/reports
+      - ./config:/app/config
+      # 如果你有 .env 文件，也可以挂载
+      - ./.env:/app/.env
+    environment:
+      - TZ=Asia/Shanghai
+    networks:
+      - app-network
+
+  # 前端服务 (Nginx)
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+    container_name: eastmoney-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80" # 映射主机 80 端口到容器 80 端口
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
