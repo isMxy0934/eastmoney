@@ -775,27 +775,32 @@ async def get_fund_market_details(code: str):
         # 使用 akshare 获取基金基本信息
         import akshare as ak
         # 1. 基础信息
-        df_info = ak.fund_individual_basic_info_xq(symbol=code)
-        raw_info = dict(zip(df_info.iloc[:, 0], df_info.iloc[:, 1]))
-        
-        # 模糊匹配键名的辅助函数
-        def get_val(d, *keys):
-            for k in d.keys():
-                for target in keys:
-                    if target in str(k):
-                        return d[k]
-            return "---"
+        info_dict = {"manager": "---", "size": "---", "est_date": "---", "type": "---", "company": "---", "rating": "---", "nav": "---"}
+        try:
+            df_info = ak.fund_individual_basic_info_xq(symbol=code)
+            raw_info = dict(zip(df_info.iloc[:, 0], df_info.iloc[:, 1]))
+            
+            # 模糊匹配键名的辅助函数
+            def get_val(d, *keys):
+                for k in d.keys():
+                    for target in keys:
+                        if target in str(k):
+                            return d[k]
+                return "---"
 
-        # 标准化常用键名，确保前端能拿到数据
-        info_dict = {
-            "manager": get_val(raw_info, "经理"),
-            "size": get_val(raw_info, "规模"),
-            "est_date": get_val(raw_info, "成立"),
-            "type": get_val(raw_info, "类型"),
-            "company": get_val(raw_info, "公司"),
-            "rating": get_val(raw_info, "评级"),
-            "nav": get_val(raw_info, "净值", "价格")
-        }
+            info_dict = {
+                "manager": get_val(raw_info, "经理"),
+                "size": get_val(raw_info, "规模"),
+                "est_date": get_val(raw_info, "成立"),
+                "type": get_val(raw_info, "类型"),
+                "company": get_val(raw_info, "公司"),
+                "rating": get_val(raw_info, "评级"),
+                "nav": get_val(raw_info, "净值", "价格")
+            }
+        except Exception as info_e:
+            print(f"Basic info fetch failed for {code}: {info_e}")
+            # Fallback for name/code if needed? No, we have code.
+            pass
         
         # 如果 basic_info 没拿到 nav，尝试从历史净值中拿最新的
         if info_dict["nav"] == "---":
