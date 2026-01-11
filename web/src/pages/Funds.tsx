@@ -509,7 +509,7 @@ export default function FundsPage() {
                 <Box>
                     <Typography variant="overline" sx={{ color: '#64748b', fontWeight: 800, mb: 1, display: 'block' }}>{t('funds.dialog.asset_identity')}</Typography>
                     <Grid container spacing={2}>
-                        <Grid xs={4}>
+                        <Grid size={4}>
                             <TextField
                                 label={t('funds.dialog.fund_code')}
                                 fullWidth
@@ -520,7 +520,7 @@ export default function FundsPage() {
                                 placeholder="000000"
                             />
                         </Grid>
-                        <Grid xs={8}>
+                        <Grid size={8}>
                             <TextField
                                 label={t('funds.dialog.fund_name')}
                                 fullWidth
@@ -537,7 +537,7 @@ export default function FundsPage() {
                 <Box>
                     <Typography variant="overline" sx={{ color: '#64748b', fontWeight: 800, mb: 1, display: 'block' }}>{t('funds.dialog.strategy_config')}</Typography>
                     <Grid container spacing={2}>
-                        <Grid xs={6}>
+                        <Grid size={6}>
                             <TextField
                                 label={t('funds.dialog.style')}
                                 fullWidth
@@ -547,7 +547,7 @@ export default function FundsPage() {
                                 placeholder="Growth, Sector, etc."
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={6}>
                             <TextField
                                 label={t('funds.dialog.focus_sectors')}
                                 fullWidth
@@ -567,7 +567,7 @@ export default function FundsPage() {
                         <HistoryIcon sx={{ fontSize: 16 }} /> {t('funds.dialog.schedule')}
                     </Typography>
                     <Grid container spacing={2}>
-                        <Grid xs={6}>
+                        <Grid size={6}>
                             <TextField
                                 label={t('funds.dialog.pre_market')}
                                 type="time"
@@ -578,7 +578,7 @@ export default function FundsPage() {
                                 InputLabelProps={{ shrink: true }}
                             />
                         </Grid>
-                        <Grid xs={6}>
+                        <Grid size={6}>
                             <TextField
                                 label={t('funds.dialog.post_market')}
                                 type="time"
@@ -666,7 +666,7 @@ export default function FundsPage() {
                    { label: t('funds.details.fund_size'), value: fundDetails?.info?.size },
                    { label: t('funds.details.morningstar'), value: fundDetails?.info?.rating },
                  ].map((item, i) => (
-                   <Grid xs={4} key={i}>
+                   <Grid size={4} key={i}>
                       <Typography sx={{ color: '#94a3b8', fontSize: '0.65rem', fontWeight: 800, mb: 0.5 }}>{item.label}</Typography>
                       <Typography sx={{ color: '#334155', fontSize: '0.75rem', fontWeight: 700 }}>
                         {item.value && typeof item.value !== 'object' ? item.value : '---'}

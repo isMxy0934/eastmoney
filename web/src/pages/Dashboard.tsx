@@ -15,7 +15,6 @@ import BoltIcon from '@mui/icons-material/Bolt';
 import PublicIcon from '@mui/icons-material/Public';
 import StorageIcon from '@mui/icons-material/Storage';
 import TimelineIcon from '@mui/icons-material/Timeline';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import { fetchDashboardOverview } from '../api';
 
 // --- Utility Components ---
@@ -25,12 +24,6 @@ const NumberMono = ({ children, className = "", style = {} }: any) => (
         {children}
     </span>
 );
-
-const TrendIcon = ({ val }: { val: number }) => {
-    if (val > 0) return <ArrowDropUpIcon fontSize="small" className="text-red-500 -my-1" />;
-    if (val < 0) return <ArrowDropDownIcon fontSize="small" className="text-green-500 -my-1" />;
-    return <span className="w-4 h-4 inline-block" />;
-};
 
 const ColorVal = ({ val, suffix = "", bold = true }: { val: number, suffix?: string, bold?: boolean }) => {
     const colorClass = val > 0 ? "text-red-600" : val < 0 ? "text-green-600" : "text-slate-500";

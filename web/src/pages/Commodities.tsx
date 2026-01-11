@@ -137,7 +137,7 @@ export default function CommoditiesPage() {
         
         return Object.keys(groups).sort((a, b) => b.localeCompare(a)).map(date => ({
             date,
-            items: groups[date].sort((a, b) => (a.fund_code === 'gold' ? -1 : 1))
+            items: groups[date].sort((a, _b) => (a.fund_code === 'gold' ? -1 : 1))
         }));
     }, [reports, searchQuery]);
 
