@@ -28,6 +28,8 @@
       "dashboard_sub": "Market cockpit",
       "universe": "Universe",
       "universe_sub": "Manage portfolio nodes",
+      "stocks": "Stocks",
+      "stocks_sub": "Equity Watchlist",
       "sentiment": "Sentiment",
       "sentiment_sub": "Market vibe analysis",
       "intelligence": "Intelligence",
@@ -148,6 +150,58 @@
       "trigger_success": "Intelligence node triggered successfully"
     }
   },
+  "stocks": {
+    "title": "Stocks",
+    "subtitle": "Manage your stock watchlist",
+    "add_stock": "Add Stock",
+    "table": {
+      "symbol": "SYMBOL",
+      "sector": "SECTOR",
+      "market": "MARKET",
+      "volume": "HANDS",
+      "latest_price": "LATEST PRICE"
+    },
+    "menu": {
+      "view_details": "View Details",
+      "edit_config": "Edit Config"
+    },
+    "dialog": {
+      "edit_title": "Edit Stock",
+      "add_title": "Add Stock",
+      "market_search": "Market Search",
+      "search_placeholder": "Search by code or name",
+      "stock_info": "Stock Info",
+      "name_placeholder": "Stock Name",
+      "config": "Config",
+      "sector": "Sector",
+      "sector_placeholder": "Tech, Bio...",
+      "market": "Market",
+      "market_placeholder": "SH, SZ..."
+    },
+    "details": {
+      "no_details": "No details available",
+      "market_data": "Market Data",
+      "open": "Open",
+      "high": "High",
+      "low": "Low",
+      "volume": "Volume",
+      "amount": "Amount",
+      "company_profile": "Company Profile",
+      "industry": "Industry",
+      "market_cap": "Market Cap",
+      "pe": "PE",
+      "pb": "PB",
+      "close": "Close"
+    },
+    "messages": {
+      "required_fields": "Code and Name are required",
+      "save_success": "Stock saved successfully",
+      "save_error": "Error saving stock",
+      "delete_confirm": "Are you sure you want to delete this stock?",
+      "delete_success": "Stock deleted",
+      "delete_error": "Error removing stock"
+    }
+  },
   "sentiment": {
     "title": "Market Sentiment",
     "news": "News",
@@ -159,7 +213,9 @@
     "no_signals": "No signals recorded.",
     "select_sub": "or click \"Run Analysis\" to generate a new one",
     "error_gen": "Failed to generate sentiment analysis.",
-    "error_load": "Failed to load report content."
+    "error_load": "Failed to load report content.",
+    "analysis_started": "Sentiment analysis started, please wait...",
+    "analysis_complete": "Analysis complete!"
   },
   "reports": {
     "title": "Intelligence Reports",

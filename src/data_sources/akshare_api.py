@@ -24,7 +24,7 @@ def _normalize_a_stock_code(stock_code: str) -> str:
     return stock_code
 
 
-def _get_a_stock_spot_by_code_cached(cache_ttl_seconds: int = 30, force_refresh: bool = False) -> Optional[Dict[str, Dict]]:
+def get_all_stock_spot_map(cache_ttl_seconds: int = 30, force_refresh: bool = False) -> Optional[Dict[str, Dict]]:
     """Return a cached mapping {code -> row_dict} built from ak.stock_zh_a_spot_em()."""
     global _A_STOCK_SPOT_CACHE_FETCHED_AT, _A_STOCK_SPOT_CACHE_BY_CODE
 
@@ -37,17 +37,56 @@ def _get_a_stock_spot_by_code_cached(cache_ttl_seconds: int = 30, force_refresh:
         ):
             return _A_STOCK_SPOT_CACHE_BY_CODE
 
-        df = ak.stock_zh_a_spot_em()
-        if df is None or df.empty or '代码' not in df.columns:
-            _A_STOCK_SPOT_CACHE_BY_CODE = None
-            _A_STOCK_SPOT_CACHE_FETCHED_AT = now
-            return None
+        try:
+            df = ak.stock_zh_a_spot_em()
+            if df is None or df.empty or '代码' not in df.columns:
+                # Keep old cache if fetch fails? Or clear? Let's clear to be safe or maybe keep old is better?
+                # If fetch fails, returning None lets caller handle it.
+                return _A_STOCK_SPOT_CACHE_BY_CODE
+            
+            # Build once for O(1) lookups during holdings loops
+            # Columns usually: 代码, 名称, 最新价, 涨跌幅, ...
+            by_code = df.set_index('代码').to_dict('index')
+            _A_STOCK_SPOT_CACHE_BY_CODE = by_code
+            _A_STOCK_SPOT_CACHE_FETCHED_AT = time.time()
+            return by_code
+        except Exception as e:
+            print(f"Error refreshing stock spot map: {e}")
+            return _A_STOCK_SPOT_CACHE_BY_CODE
 
-        # Build once for O(1) lookups during holdings loops
-        by_code = df.set_index('代码').to_dict('index')
-        _A_STOCK_SPOT_CACHE_BY_CODE = by_code
-        _A_STOCK_SPOT_CACHE_FETCHED_AT = time.time()
-        return by_code
+def get_stock_history(code: str, days: int = 100) -> List[Dict]:
+    """
+    Fetch daily history for a stock.
+    Returns: List of {date, value, volume, ...}
+    """
+    try:
+        code = _normalize_a_stock_code(code)
+        end_date = datetime.now()
+        # Estimate start date (trading days != calendar days, so multiply by 1.5 buffer)
+        start_date = end_date - timedelta(days=int(days * 1.6)) 
+        
+        start_str = start_date.strftime("%Y%m%d")
+        end_str = end_date.strftime("%Y%m%d")
+        
+        df = ak.stock_zh_a_hist(symbol=code, period="daily", start_date=start_str, end_date=end_str, adjust="qfq")
+        
+        if df is None or df.empty:
+            return []
+            
+        # df columns: 日期, 开盘, 收盘, 最高, 最低, 成交量, 成交额, ...
+        # Standardize to: date, value (close)
+        result = []
+        for _, row in df.iterrows():
+            result.append({
+                "date": str(row['日期']),
+                "value": float(row['收盘']),
+                "volume": float(row['成交量'])
+            })
+            
+        return result
+    except Exception as e:
+        print(f"Error fetching history for {code}: {e}")
+        return []
 
 # ============================================================================
 # SECTION 1: 全球宏观市场数据 (Global Macro Data)
@@ -285,28 +324,75 @@ def get_stock_realtime_quote(
 ) -> Dict:
     """
     获取个股实时/最新行情
+    Prioritizes cache, then fast single-stock fetch (bid_ask_em), then full market spot.
     """
     try:
         code = _normalize_a_stock_code(stock_code)
         if not code:
             return {}
 
+        # 1. Try Cache
         if use_cache:
-            by_code = _get_a_stock_spot_by_code_cached(
-                cache_ttl_seconds=cache_ttl_seconds,
-                force_refresh=force_refresh,
-            )
-            if by_code is not None:
-                row = by_code.get(code)
-                if row:
-                    return row
+            # Check global cache variable directly to avoid triggering a full fetch if empty
+            # We only use get_all_stock_spot_map if we WANT to ensure cache is populated, 
+            # but here we want to avoid slow fetch for single stock.
+            # So we check the variable directly (thread-safe lock needed if reading? Reading dict ref is atomic in Py)
+            # But let's use the getter if it doesn't force refresh.
+            # actually get_all_stock_spot_map will fetch if empty.
+            # So check the global variable _A_STOCK_SPOT_CACHE_BY_CODE directly.
+            
+            with _A_STOCK_SPOT_CACHE_LOCK:
+                if _A_STOCK_SPOT_CACHE_BY_CODE is not None:
+                     row = _A_STOCK_SPOT_CACHE_BY_CODE.get(code)
+                     if row: return row
 
-        # Fallback: direct fetch
-        df = ak.stock_zh_a_spot_em()
-        if df is not None and not df.empty:
-            stock = df[df['代码'] == code]
-            if not stock.empty:
-                return stock.iloc[0].to_dict()
+        # 2. Fast Fetch (Single Stock)
+        try:
+            df = ak.stock_bid_ask_em(symbol=code)
+            if not df.empty:
+                # df columns: item, value. 
+                # Keys: 最新, 涨幅, 总手, 金额, 最高, 最低, 今开, 昨收, 涨跌
+                info = dict(zip(df['item'], df['value']))
+                
+                # Map to standard keys (compatible with stock_zh_a_spot_em)
+                return {
+                    '代码': code,
+                    '名称': '', # Name not available in bid_ask
+                    '最新价': info.get('最新'),
+                    '涨跌幅': info.get('涨幅'),
+                    '涨跌额': info.get('涨跌'),
+                    '成交量': float(info.get('总手', 0)) * 100 if info.get('总手') else None,
+                    '成交额': info.get('金额'),
+                    '最高': info.get('最高'),
+                    '最低': info.get('最低'),
+                    '今开': info.get('今开'),
+                    '昨收': info.get('昨收'),
+                    # Extra fields useful for debug
+                    '均价': info.get('均价'),
+                    '量比': info.get('量比'),
+                    '换手': info.get('换手'),
+                    '涨停': info.get('涨停'),
+                    '跌停': info.get('跌停'),
+                    '外盘': info.get('外盘'),
+                    '内盘': info.get('内盘'),
+                }
+        except Exception as e:
+            # print(f"Bid/Ask fetch failed for {code}: {e}") # Debug only
+            pass
+
+        # 3. Fallback: Full Market Fetch (if bid_ask failed, which is rare, or code not found)
+        # Only do this if we really really want data and bid_ask failed.
+        # But for a single stock, fetching 5000 is overkill. 
+        # Better to return empty or try spot_em(single) if it existed (it doesn't).
+        # Let's try get_all_stock_spot_map as last resort if cache was empty and we are desperate.
+        
+        # Actually, if bid_ask failed, maybe code is wrong or market closed?
+        # get_all_stock_spot_map might have it.
+        if force_refresh: # Only if forced, otherwise avoid heavy load
+            by_code = get_all_stock_spot_map(force_refresh=True)
+            if by_code:
+                return by_code.get(code, {})
+
     except Exception as e:
         print(f"Error fetching realtime quote for {stock_code}: {e}")
     return {}

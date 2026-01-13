@@ -30,6 +30,7 @@ import SpeedIcon from '@mui/icons-material/Speed';
 import LanguageIcon from '@mui/icons-material/Language';
 import LogoutIcon from '@mui/icons-material/Logout';
 import PersonIcon from '@mui/icons-material/Person';
+import ShowChartIcon from '@mui/icons-material/ShowChart';
 
 import { fetchMarketIndices } from '../../api';
 import type {IndexData} from '../../api';
@@ -73,6 +74,7 @@ export default function Layout() {
   const MENU_ITEMS = useMemo(() => [
     { text: t('layout.menu.dashboard'), icon: <SpeedIcon />, path: '/dashboard', subtitle: t('layout.menu.dashboard_sub') },
     { text: t('layout.menu.universe'), icon: <PieChartIcon />, path: '/funds', subtitle: t('layout.menu.universe_sub') },
+    { text: t('layout.menu.stocks'), icon: <ShowChartIcon />, path: '/stocks', subtitle: t('layout.menu.stocks_sub') },
     { text: t('layout.menu.sentiment'), icon: <AutoGraphIcon />, path: '/sentiment', subtitle: t('layout.menu.sentiment_sub') },
     { text: t('layout.menu.intelligence'), icon: <ArticleIcon />, path: '/reports', subtitle: t('layout.menu.intelligence_sub') },
     { text: t('layout.menu.commodities'), icon: <MonetizationOnIcon />, path: '/commodities', subtitle: t('layout.menu.commodities_sub') },

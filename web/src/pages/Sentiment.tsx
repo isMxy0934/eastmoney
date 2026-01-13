@@ -13,7 +13,8 @@ import {
   ListItemText,
   ListSubheader,
   Tooltip,
-  IconButton
+  IconButton,
+  Snackbar
 } from '@mui/material';
 import AutoGraphIcon from '@mui/icons-material/AutoGraph';
 import HistoryIcon from '@mui/icons-material/History';
@@ -37,6 +38,10 @@ export default function SentimentPage() {
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<SentimentReportItem[]>([]);
   const [exporting, setExporting] = useState<boolean>(false);
+  
+  // Snackbar state
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMsg, setSnackbarMsg] = useState('');
 
   // Ref for export
   const reportRef = useRef<HTMLDivElement>(null);
@@ -57,6 +62,10 @@ export default function SentimentPage() {
   useEffect(() => {
     loadHistory();
   }, []);
+
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
+  };
 
   // Group history by Date (YYYY-MM-DD)
   const groupedHistory = useMemo(() => {
@@ -79,20 +88,30 @@ export default function SentimentPage() {
     return Object.entries(groups).sort((a, b) => new Date(b[0]).getTime() - new Date(a[0]).getTime());
   }, [history]);
 
-  const handleRunAnalysis = async () => {
+  const handleRunAnalysis = () => {
+    // Notify user immediately that analysis is running
+    setSnackbarMsg(t('sentiment.analysis_started'));
+    setSnackbarOpen(true);
+    
     setAnalyzing(true);
     setError(null);
-    try {
-      const data = await runSentimentAnalysis();
-      setReport(data.report);
-      setSelectedFile(data.filename);
-      await loadHistory(); 
-    } catch (err) {
-      console.error(err);
-      setError(t('sentiment.error_gen'));
-    } finally {
-      setAnalyzing(false);
-    }
+    
+    // Non-blocking call
+    runSentimentAnalysis()
+      .then(async (data) => {
+        setReport(data.report);
+        setSelectedFile(data.filename);
+        await loadHistory();
+        setSnackbarMsg(t('sentiment.analysis_complete'));
+        setSnackbarOpen(true);
+      })
+      .catch((err) => {
+        console.error(err);
+        setError(t('sentiment.error_gen'));
+      })
+      .finally(() => {
+        setAnalyzing(false);
+      });
   };
 
   const handleSelectReport = async (filename: string) => {
@@ -392,6 +411,18 @@ export default function SentimentPage() {
                 </Box>
               )}
           </Box>
+          
+          {/* Snackbar Notification */}
+          <Snackbar
+            open={snackbarOpen}
+            autoHideDuration={6000}
+            onClose={handleCloseSnackbar}
+            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          >
+            <Alert onClose={handleCloseSnackbar} severity="info" sx={{ width: '100%', borderRadius: '8px', boxShadow: 3 }}>
+              {snackbarMsg}
+            </Alert>
+          </Snackbar>
         </div>
       </div>
     </div>

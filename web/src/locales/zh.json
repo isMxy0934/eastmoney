@@ -28,6 +28,8 @@
       "dashboard_sub": "市场驾驶舱",
       "universe": "基金池",
       "universe_sub": "管理投资组合节点",
+      "stocks": "股票",
+      "stocks_sub": "自选股监控",
       "sentiment": "情绪",
       "sentiment_sub": "市场情绪分析",
       "intelligence": "情报",
@@ -148,6 +150,58 @@
       "trigger_success": "情报节点触发成功"
     }
   },
+  "stocks": {
+    "title": "股票",
+    "subtitle": "管理您的自选股",
+    "add_stock": "添加股票",
+    "table": {
+      "symbol": "代码",
+      "sector": "板块",
+      "market": "市场",
+      "volume": "总手",
+      "latest_price": "最新价"
+    },
+    "menu": {
+      "view_details": "查看详情",
+      "edit_config": "编辑配置"
+    },
+    "dialog": {
+      "edit_title": "编辑股票",
+      "add_title": "添加股票",
+      "market_search": "市场搜索",
+      "search_placeholder": "搜索代码或名称",
+      "stock_info": "股票信息",
+      "name_placeholder": "股票名称",
+      "config": "配置",
+      "sector": "板块",
+      "sector_placeholder": "科技, 生物...",
+      "market": "市场",
+      "market_placeholder": "上证, 深证..."
+    },
+    "details": {
+      "no_details": "暂无详情",
+      "market_data": "市场数据",
+      "open": "今开",
+      "high": "最高",
+      "low": "最低",
+      "volume": "成交量",
+      "amount": "成交额",
+      "company_profile": "公司简介",
+      "industry": "行业",
+      "market_cap": "总市值",
+      "pe": "市盈率",
+      "pb": "市净率",
+      "close": "关闭"
+    },
+    "messages": {
+      "required_fields": "代码和名称为必填项",
+      "save_success": "股票保存成功",
+      "save_error": "保存股票失败",
+      "delete_confirm": "确定要删除这只股票吗？",
+      "delete_success": "股票已删除",
+      "delete_error": "删除股票错误"
+    }
+  },
   "sentiment": {
     "title": "市场情绪",
     "news": "新闻",
@@ -159,7 +213,9 @@
     "no_signals": "无信号记录",
     "select_sub": "或点击“运行分析”生成新报告",
     "error_gen": "生成情绪分析失败。",
-    "error_load": "加载报告内容失败。"
+    "error_load": "加载报告内容失败。",
+    "analysis_started": "情绪分析已启动，请稍候...",
+    "analysis_complete": "情绪分析完成！"
   },
   "reports": {
     "title": "情报研报",

@@ -218,3 +218,55 @@ export const fetchSentimentReports = async (): Promise<SentimentReportItem[]> =>
 export const deleteSentimentReport = async (filename: string): Promise<void> => {
   await api.delete(`/sentiment/reports/${filename}`);
 };
+
+
+// --- Stock API ---
+
+export interface StockItem {
+  code: string;
+  name: string;
+  market?: string;
+  sector?: string;
+  is_active?: boolean;
+  price?: number;
+  change_pct?: number;
+  volume?: number;
+}
+
+export const fetchStocks = async (): Promise<StockItem[]> => {
+  const response = await api.get('/stocks');
+  return response.data;
+};
+
+export const saveStock = async (stock: StockItem): Promise<void> => {
+  await api.put(`/stocks/${stock.code}`, stock);
+};
+
+export const deleteStock = async (code: string): Promise<void> => {
+  await api.delete(`/stocks/${code}`);
+};
+
+export interface MarketStock {
+    code: string;
+    name: string;
+}
+
+export const searchMarketStocks = async (query: string): Promise<MarketStock[]> => {
+    const response = await api.get('/market/stocks', { params: { query } });
+    return response.data;
+};
+
+export interface StockDetails {
+    quote: Record<string, any>;
+    info: Record<string, string>;
+}
+
+export const fetchStockDetails = async (code: string): Promise<StockDetails> => {
+    const response = await api.get(`/market/stocks/${code}/details`);
+    return response.data;
+};
+
+export const fetchStockHistory = async (code: string): Promise<NavPoint[]> => {
+    const response = await api.get(`/market/stocks/${code}/history`);
+    return response.data;
+};

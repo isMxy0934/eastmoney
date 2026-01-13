@@ -2,30 +2,34 @@ import os
 import sys
 import json
 import asyncio
-import pandas as pd
+import glob
+import threading
 from contextlib import asynccontextmanager
+from typing import List, Optional, Dict, Any
+from datetime import datetime, timedelta
+
 from fastapi import FastAPI, HTTPException, Body, Depends, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import List, Optional, Dict, Any
-import glob
 
 # Ensure src is in path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+# Imports from project
 from src.analysis.pre_market import PreMarketAnalyst
 from src.analysis.post_market import PostMarketAnalyst
 from src.analysis.sentiment.dashboard import SentimentDashboard
 from src.analysis.commodities.gold_silver import GoldSilverAnalyst
 from src.analysis.dashboard import DashboardService
 from src.data_sources.akshare_api import search_funds
-from src.storage.db import init_db, get_active_funds, get_all_funds, upsert_fund, delete_fund, get_fund_by_code
+from src.storage.db import init_db, get_active_funds, get_all_funds, upsert_fund, delete_fund, get_fund_by_code, get_all_stocks, upsert_stock, delete_stock
 from src.scheduler.manager import scheduler_manager
 from src.report_gen import save_report
-from src.data_sources.akshare_api import get_all_fund_list
-from datetime import datetime, timedelta
-from fastapi.security import OAuth2PasswordRequestForm
+# Updated import
+from src.data_sources.akshare_api import get_all_fund_list, get_stock_realtime_quote, get_all_stock_spot_map, get_stock_history
+import akshare as ak
 from src.auth import Token, UserCreate, User, create_access_token, get_password_hash, verify_password, get_current_user, create_user, get_user_by_username
+from fastapi.security import OAuth2PasswordRequestForm
 
 # --- Startup/Shutdown ---
 @asynccontextmanager
@@ -50,8 +54,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --- Auth Endpoints ---
+@app.get("/api/market/funds")
+async def search_market_funds(q: str):
+    if not q:
+        return []
+    try:
+        results = search_funds(q)
+        return results
+    except Exception as e:
+        print(f"Search error: {e}")
+        return []
+    
 
+
+# --- Auth Endpoints ---
 @app.post("/api/auth/register", response_model=Token)
 async def register(user: UserCreate):
     existing = get_user_by_username(user.username)
@@ -100,6 +116,7 @@ REPORT_DIR = os.path.join(BASE_DIR, "reports")
 CONFIG_DIR = os.path.join(BASE_DIR, "config")
 ENV_FILE = os.path.join(BASE_DIR, ".env")
 MARKET_FUNDS_CACHE = os.path.join(CONFIG_DIR, "market_funds_cache.json")
+MARKET_STOCKS_CACHE = os.path.join(CONFIG_DIR, "market_stocks_cache.json")
 
 def get_user_report_dir(user_id: int) -> str:
     user_dir = os.path.join(REPORT_DIR, str(user_id))
@@ -124,9 +141,17 @@ class FundItem(BaseModel):
     focus: Optional[List[str]] = []
     pre_market_time: Optional[str] = None
     post_market_time: Optional[str] = None
-    pre_market_time: Optional[str] = None # HH:MM
-    post_market_time: Optional[str] = None # HH:MM
     is_active: bool = True
+
+class StockItem(BaseModel):
+    code: str
+    name: str
+    market: Optional[str] = ""
+    sector: Optional[str] = ""
+    is_active: bool = True
+    price: Optional[float] = None
+    change_pct: Optional[float] = None
+    volume: Optional[float] = None
 
 class SettingsUpdate(BaseModel):
     llm_provider: Optional[str] = None
@@ -176,13 +201,11 @@ def load_env_file():
     return env_vars
 
 def save_env_file(updates: Dict[str, str]):
-    # Read existing lines to preserve comments/order
     lines = []
     if os.path.exists(ENV_FILE):
         with open(ENV_FILE, "r", encoding="utf-8") as f:
             lines = f.readlines()
     
-    # Map of key -> line_index
     key_map = {}
     for i, line in enumerate(lines):
         if line.strip() and not line.strip().startswith("#") and "=" in line:
@@ -190,7 +213,7 @@ def save_env_file(updates: Dict[str, str]):
             key_map[k] = i
     
     for key, value in updates.items():
-        if value is None: continue # Skip if not provided
+        if value is None: continue 
         
         new_line = f"{key}={value}\n"
         if key in key_map:
@@ -218,7 +241,6 @@ async def get_dashboard_stats(current_user: User = Depends(get_current_user)):
     try:
         user_report_dir = get_user_report_dir(current_user.id)
         service = DashboardService(REPORT_DIR)
-        # Stats are lightweight (filesystem only), no need for thread unless very many files
         return service.get_system_stats(user_report_dir)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -227,7 +249,6 @@ async def get_dashboard_stats(current_user: User = Depends(get_current_user)):
 async def analyze_commodity(request: CommodityAnalyzeRequest, current_user: User = Depends(get_current_user)):
     try:
         analyst = GoldSilverAnalyst()
-        # Offload heavy analysis to thread
         report = await asyncio.to_thread(analyst.analyze, request.asset, current_user.id)
         return {"status": "success", "message": f"{request.asset} analysis complete"}
     except Exception as e:
@@ -241,7 +262,6 @@ async def list_reports(current_user: User = Depends(get_current_user)):
     if not os.path.exists(user_report_dir):
         return []
     
-    # Load funds for name mapping
     fund_map = {}
     try:
         funds = get_all_funds(user_id=current_user.id)
@@ -251,24 +271,14 @@ async def list_reports(current_user: User = Depends(get_current_user)):
         pass
 
     reports = []
-    # Match all .md files in user dir
     files = glob.glob(os.path.join(user_report_dir, "*.md"))
-    files.sort(key=os.path.getmtime, reverse=True) # Newest first
+    files.sort(key=os.path.getmtime, reverse=True)
     
     for f in files:
         filename = os.path.basename(f)
         try:
-            # Remove extension
             name_no_ext = os.path.splitext(filename)[0]
-            
-            # Old format compatibility: remove _report suffix if strictly present in the middle (unlikely now but good for safety)
-            # Actually, let's just split by "_"
             parts = name_no_ext.split("_")
-            
-            # Expected formats:
-            # 1. YYYY-MM-DD_mode_SUMMARY
-            # 2. YYYY-MM-DD_mode_CODE_NAME
-            # 3. YYYY-MM-DD_mode_report (Old legacy)
             
             if len(parts) < 2: continue
             
@@ -284,12 +294,8 @@ async def list_reports(current_user: User = Depends(get_current_user)):
                     fund_name="Market Overview"
                 ))
             elif len(parts) >= 3:
-                 # Format: YYYY-MM-DD_mode_CODE_NAME...
                  code = parts[2]
-                 # Join the rest as name (in case name has underscores, though sanitized)
                  extracted_name = "_".join(parts[3:]) if len(parts) > 3 else ""
-                 
-                 # Use extracted name if available, else fallback to map, else code
                  final_name = extracted_name if extracted_name else fund_map.get(code, code)
                  
                  reports.append(ReportSummary(
@@ -309,7 +315,6 @@ async def list_reports(current_user: User = Depends(get_current_user)):
 @app.delete("/api/reports/{filename}")
 async def delete_report(filename: str, current_user: User = Depends(get_current_user)):
     try:
-        # Security check
         if not filename.endswith(".md") or ".." in filename or "/" in filename or "\\" in filename:
              raise HTTPException(status_code=400, detail="Invalid filename")
         
@@ -329,15 +334,11 @@ async def delete_report(filename: str, current_user: User = Depends(get_current_
 async def get_report(filename: str, current_user: User = Depends(get_current_user)):
     user_report_dir = get_user_report_dir(current_user.id)
     
-    # Try user report dir first
     filepath = os.path.join(user_report_dir, filename)
     if not os.path.exists(filepath):
-        # Try sentiment subdir (Global or User specific? Let's assume user specific for now or shared logic)
-        # If we want sentiment by user, we need get_user_report_dir(uid)/sentiment
         filepath = os.path.join(user_report_dir, "sentiment", filename)
     
     if not os.path.exists(filepath):
-        # Try commodities subdir
         filepath = os.path.join(user_report_dir, "commodities", filename)
 
     if not os.path.exists(filepath):
@@ -357,21 +358,14 @@ async def list_commodity_reports(current_user: User = Depends(get_current_user))
         return []
 
     reports = []
-    # Match all .md files
     files = glob.glob(os.path.join(commodities_dir, "*.md"))
     files.sort(key=os.path.getmtime, reverse=True)
     
     for f in files:
         filename = os.path.basename(f)
         try:
-            # Format: YYYY-MM-DD_HHMMSS_commodities_CODE_NAME.md (New)
-            # Format: YYYY-MM-DD_commodities_CODE_NAME.md (Old)
             name_no_ext = os.path.splitext(filename)[0]
             parts = name_no_ext.split("_")
-            
-            # Identify format based on parts length and 'commodities' position
-            # New format: len >= 5, parts[2] == 'commodities'
-            # Old format: len >= 4, parts[1] == 'commodities'
             
             if len(parts) >= 5 and parts[2] == 'commodities':
                 date_str = parts[0]
@@ -389,7 +383,6 @@ async def list_commodity_reports(current_user: User = Depends(get_current_user))
                     is_summary=False
                 ))
             elif len(parts) >= 4 and parts[1] == 'commodities':
-                # Old format fallback
                 date_str = parts[0]
                 code = parts[2]
                 name = "_".join(parts[3:])
@@ -411,7 +404,6 @@ async def list_commodity_reports(current_user: User = Depends(get_current_user))
 @app.delete("/api/commodities/reports/{filename}")
 async def delete_commodity_report(filename: str, current_user: User = Depends(get_current_user)):
     try:
-        # Security check
         if not filename.endswith(".md") or ".." in filename or "/" in filename or "\\" in filename:
              raise HTTPException(status_code=400, detail="Invalid filename")
              
@@ -432,9 +424,7 @@ async def delete_commodity_report(filename: str, current_user: User = Depends(ge
 async def search_market_funds(query: str = ""):
     funds = []
     
-    # Check cache
     if os.path.exists(MARKET_FUNDS_CACHE):
-        # Check modified time (e.g. 24h)
         try:
             mtime = os.path.getmtime(MARKET_FUNDS_CACHE)
             if (datetime.now().timestamp() - mtime) < 86400:
@@ -443,11 +433,9 @@ async def search_market_funds(query: str = ""):
         except Exception as e:
             print(f"Cache read error: {e}")
     
-    # If no funds from cache, fetch
     if not funds:
         print("Fetching fresh fund list from AkShare...")
         funds = get_all_fund_list()
-        # Cache it
         if funds:
             try:
                 if not os.path.exists(CONFIG_DIR):
@@ -457,15 +445,12 @@ async def search_market_funds(query: str = ""):
             except Exception as e:
                 print(f"Cache write error: {e}")
             
-    # Filter
     if not query:
-        return funds[:20] # Return top 20 if no query
+        return funds[:20]
         
     query = query.lower()
     results = []
     for f in funds:
-        # Match code (startswith) or name (contains) or pinyin (contains)
-        # Safe access with .get()
         f_code = str(f.get('code', ''))
         f_name = str(f.get('name', ''))
         f_pinyin = str(f.get('pinyin', ''))
@@ -475,7 +460,7 @@ async def search_market_funds(query: str = ""):
             query in f_pinyin.lower()):
             results.append(f)
             
-            if len(results) >= 50: # Limit results
+            if len(results) >= 50:
                 break
                 
     return results
@@ -490,15 +475,10 @@ async def generate_report_endpoint(mode: str, request: GenerateRequest = None, c
     try:
         print(f"Generating {mode}-market report for User {current_user.id}... (Fund: {fund_code if fund_code else 'ALL'})")
         
-        # TODO: Ideally pass user_id to scheduler to save report in user dir
-        # For now, we update scheduler/report_gen later.
         if fund_code:
-            # Pass user_id via extra args if scheduler supported it, currently it doesn't.
-            # We will patch this behavior by setting a context or passing args.
             scheduler_manager.run_analysis_task(fund_code, mode, user_id=current_user.id)
             return {"status": "success", "message": f"Task triggered for {fund_code}"}
         else:
-            # If generating for ALL funds (Manual Trigger) - Only for THIS user's funds
             funds = get_active_funds(user_id=current_user.id)
             results = []
             for fund in funds:
@@ -522,18 +502,15 @@ _INDICES_CACHE = {
 
 @app.get("/api/market/indices")
 def get_market_indices():
-    """获取主要市场指数实时快照 (使用全球指数接口)"""
     import time
     global _INDICES_CACHE
     
-    # Check cache
     now = time.time()
     if _INDICES_CACHE["data"] and now < _INDICES_CACHE["expiry"]:
         return _INDICES_CACHE["data"]
 
     try:
         import akshare as ak
-        # 获取全球指数行情快照
         indices_df = ak.index_global_spot_em()
         
         target_names = [
@@ -555,7 +532,6 @@ def get_market_indices():
         
         data = sanitize_data(results)
         
-        # Update cache (60s TTL)
         if data:
             _INDICES_CACHE["data"] = data
             _INDICES_CACHE["expiry"] = now + 60
@@ -563,7 +539,6 @@ def get_market_indices():
         return data
     except Exception as e:
         print(f"Error fetching indices via index_global_spot_em: {e}")
-        # Return stale data if available on error
         if _INDICES_CACHE["data"]:
             return _INDICES_CACHE["data"]
         return []
@@ -572,7 +547,6 @@ def get_market_indices():
 async def get_funds_endpoint(current_user: User = Depends(get_current_user)):
     try:
         funds = get_all_funds(user_id=current_user.id)
-        # Convert JSON string focus to list if needed, DB layer handles dict conversion but 'focus' might be string
         result = []
         for f in funds:
             item = dict(f)
@@ -582,7 +556,6 @@ async def get_funds_endpoint(current_user: User = Depends(get_current_user)):
                 except:
                     item['focus'] = []
             
-            # Convert SQLite Row to dict fully
             result.append(FundItem(
                 code=item['code'],
                 name=item['name'],
@@ -600,7 +573,6 @@ async def get_funds_endpoint(current_user: User = Depends(get_current_user)):
 @app.post("/api/funds")
 async def save_funds(funds: List[FundItem], current_user: User = Depends(get_current_user)):
     try:
-        # Bulk upsert using DB
         for fund in funds:
             fund_dict = fund.model_dump()
             upsert_fund(fund_dict, user_id=current_user.id)
@@ -615,13 +587,7 @@ async def upsert_fund_endpoint(code: str, fund: FundItem, current_user: User = D
     try:
         fund_dict = fund.model_dump()
         upsert_fund(fund_dict, user_id=current_user.id)
-        
-        # Also update scheduler!
-        # Scheduler update is tricky in multi-tenant. 
-        # For now, we add the job, but scheduler logic needs to be aware of user.
-        # Ideally scheduler iterates ALL users and ALL funds.
         scheduler_manager.add_fund_jobs(fund_dict)
-        
         return {"status": "success"}
     except Exception as e:
         import traceback
@@ -632,22 +598,10 @@ async def upsert_fund_endpoint(code: str, fund: FundItem, current_user: User = D
 async def delete_fund_endpoint(code: str, current_user: User = Depends(get_current_user)):
     try:
         delete_fund(code, user_id=current_user.id)
-        # Remove from scheduler
         scheduler_manager.remove_fund_jobs(code)
         return {"status": "success"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-@app.get("/api/market/funds")
-async def search_market_funds(q: str):
-    if not q:
-        return []
-    try:
-        results = search_funds(q)
-        return results
-    except Exception as e:
-        print(f"Search error: {e}")
-        return []
 
 @app.get("/api/settings")
 async def get_settings():
@@ -684,11 +638,8 @@ async def update_settings(settings: SettingsUpdate):
 async def analyze_sentiment(current_user: User = Depends(get_current_user)):
     try:
         dashboard = SentimentDashboard()
-        # This might take time, ideally should be async or background task if very slow.
-        # For now, synchronous call is acceptable for a single user tool.
         report = await asyncio.to_thread(dashboard.run_analysis)
         
-        # Save to file as well (optional, but good for history)
         user_report_dir = get_user_report_dir(current_user.id)
         sentiment_dir = os.path.join(user_report_dir, "sentiment")
         if not os.path.exists(sentiment_dir):
@@ -720,13 +671,7 @@ async def list_sentiment_reports(current_user: User = Depends(get_current_user))
     for f in files:
         filename = os.path.basename(f)
         try:
-            # Format 1: sentiment_YYYYMMDD_HHMMSS.md -> parts len = 3
-            # Format 2: sentiment_YYYYMMDD.md -> parts len = 2
-            
             parts = filename.replace(".md", "").split("_")
-            date_str = ""
-            time_str = ""
-            
             if len(parts) >= 3:
                 date_str = parts[1]
                 time_str = parts[2]
@@ -750,7 +695,6 @@ async def list_sentiment_reports(current_user: User = Depends(get_current_user))
 @app.delete("/api/sentiment/reports/{filename}")
 async def delete_sentiment_report(filename: str, current_user: User = Depends(get_current_user)):
     try:
-        # Security check: only allow .md files in sentiment dir, no path traversal
         if not filename.endswith(".md") or ".." in filename or "/" in filename or "\\" in filename:
              raise HTTPException(status_code=400, detail="Invalid filename")
              
@@ -767,20 +711,16 @@ async def delete_sentiment_report(filename: str, current_user: User = Depends(ge
         print(f"Error deleting report: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @app.get("/api/market/funds/{code}/details")
 async def get_fund_market_details(code: str):
     """获取基金在市场上的详细信息（经理、规模、业绩、持仓等）"""
     try:
-        # 使用 akshare 获取基金基本信息
         import akshare as ak
-        # 1. 基础信息
         info_dict = {"manager": "---", "size": "---", "est_date": "---", "type": "---", "company": "---", "rating": "---", "nav": "---"}
         try:
             df_info = ak.fund_individual_basic_info_xq(symbol=code)
             raw_info = dict(zip(df_info.iloc[:, 0], df_info.iloc[:, 1]))
             
-            # 模糊匹配键名的辅助函数
             def get_val(d, *keys):
                 for k in d.keys():
                     for target in keys:
@@ -799,17 +739,13 @@ async def get_fund_market_details(code: str):
             }
         except Exception as info_e:
             print(f"Basic info fetch failed for {code}: {info_e}")
-            # Fallback for name/code if needed? No, we have code.
             pass
         
-        # 如果 basic_info 没拿到 nav，尝试从历史净值中拿最新的
         if info_dict["nav"] == "---":
             try:
-                # 使用 em 接口获取历史净值作为兜底
                 df_nav = ak.fund_open_fund_info_em(symbol=code, indicator="单位净值走势")
                 if df_nav is not None and not df_nav.empty:
                     latest_row = df_nav.iloc[-1]
-                    # 优先寻找包含'单位净值'的列，其次寻找包含'净值'的列，最后用索引
                     nav_col = None
                     for col in df_nav.columns:
                         if '单位净值' in str(col):
@@ -828,13 +764,10 @@ async def get_fund_market_details(code: str):
             except:
                 pass
 
-        # 2. 业绩评价 (使用更全的 雪球 接口)
         perf_list = []
         try:
             df_perf = ak.fund_individual_achievement_xq(symbol=code)
             if df_perf is not None and not df_perf.empty:
-                # 映射列名以匹配前端
-                # 原列名: ['业绩类型', '周期', '本产品区间收益', '本产品最大回撤', '周期收益同类排名']
                 for _, row in df_perf.iterrows():
                     perf_list.append({
                         "时间范围": row.get("周期", "---"),
@@ -844,7 +777,6 @@ async def get_fund_market_details(code: str):
         except:
             pass
 
-        # 3. 持仓分析 (作为板块信息的参考)
         portfolio = []
         try:
             df_hold = ak.fund_portfolio_hold_em(symbol=code)
@@ -869,13 +801,10 @@ async def get_fund_nav_history(code: str):
     """获取基金历史净值（用于绘图）"""
     try:
         import akshare as ak
-        # 获取单位净值走势
         df_nav = ak.fund_open_fund_info_em(symbol=code, indicator="单位净值走势")
         if df_nav is not None and not df_nav.empty:
-            # 只取最近 100 条数据以减轻传输压力
             df_nav = df_nav.tail(100).copy()
             
-            # 统一列名: 优先根据关键词匹配，兜底使用索引
             found_date = False
             found_value = False
             for col in df_nav.columns:
@@ -887,15 +816,12 @@ async def get_fund_nav_history(code: str):
                     df_nav = df_nav.rename(columns={col: 'value'})
                     found_value = True
             
-            # 兜底逻辑
             if not found_date and len(df_nav.columns) >= 1:
                 df_nav.columns.values[0] = 'date'
             if not found_value and len(df_nav.columns) >= 2:
                 df_nav.columns.values[1] = 'value'
             
-            # 确保 value 是数值型
             df_nav['value'] = pd.to_numeric(df_nav['value'], errors='coerce')
-            # 移除 NaN
             df_nav = df_nav.dropna(subset=['value'])
             
             return sanitize_data(df_nav[['date', 'value']].to_dict(orient='records'))
@@ -904,6 +830,192 @@ async def get_fund_nav_history(code: str):
         import traceback
         traceback.print_exc()
         print(f"Error fetching NAV history: {e}")
+        return []
+
+# --- Stock API ---
+
+def _enrich_stock_info(stock_dict):
+    """Auto-fill sector info if missing"""
+    if not stock_dict.get('sector'):
+        try:
+            # ak.stock_individual_info_em(symbol=code)
+            df = ak.stock_individual_info_em(symbol=stock_dict['code'])
+            if not df.empty:
+                # item, value
+                info_map = dict(zip(df['item'], df['value']))
+                stock_dict['sector'] = info_map.get('行业', '')
+        except Exception as e:
+            print(f"Auto-fetch sector failed: {e}")
+    return stock_dict
+
+from concurrent.futures import ThreadPoolExecutor
+
+# ... (Previous code)
+
+@app.get("/api/stocks", response_model=List[StockItem])
+async def get_stocks_endpoint(current_user: User = Depends(get_current_user)):
+    try:
+        stocks = get_all_stocks(user_id=current_user.id)
+        
+        def fetch_single_quote(stock):
+            item = dict(stock)
+            try:
+                # Use stock_bid_ask_em for fast single stock query
+                # This returns a DF with [item, value] columns
+                df = ak.stock_bid_ask_em(symbol=stock['code'])
+                if not df.empty:
+                    info = dict(zip(df['item'], df['value']))
+                    
+                    # Try keys from stock_bid_ask_em (Commonly: 最新, 涨幅, 总手)
+                    price = info.get('最新') or info.get('最新价')
+                    change = info.get('涨幅') or info.get('涨跌幅')
+                    vol = info.get('总手') or info.get('成交量')
+                    
+                    # Safe conversion
+                    if price is not None and str(price) != '': 
+                        item['price'] = float(price)
+                    if change is not None and str(change) != '': 
+                        item['change_pct'] = float(change)
+                    if vol is not None and str(vol) != '': 
+                        v = float(vol)
+                        # If came from '总手' (Hands), convert to shares for consistency
+                        if info.get('总手') is not None:
+                            v = v * 100
+                        item['volume'] = v
+            except Exception:
+                # Silently fail for individual stock fetch errors to not break the whole list
+                pass
+            return StockItem(**item)
+
+        # Execute in parallel
+        # Note: akshare calls are blocking/sync, so ThreadPool is appropriate
+        loop = asyncio.get_event_loop()
+        with ThreadPoolExecutor(max_workers=10) as executor:
+             results = await loop.run_in_executor(None, lambda: list(executor.map(fetch_single_quote, stocks)))
+             
+        return results
+    except Exception as e:
+        print(f"Error reading stocks: {e}")
+        return []
+
+@app.post("/api/stocks")
+async def save_stocks(stocks: List[StockItem], current_user: User = Depends(get_current_user)):
+    try:
+        for stock in stocks:
+            data = stock.model_dump()
+            # Run enrichment in thread to avoid blocking
+            data = await asyncio.to_thread(_enrich_stock_info, data)
+            upsert_stock(data, user_id=current_user.id)
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/stocks/{code}")
+async def upsert_stock_endpoint(code: str, stock: StockItem, current_user: User = Depends(get_current_user)):
+    try:
+        data = stock.model_dump()
+        # Enrich only if sector is empty to allow manual override
+        if not data.get('sector'):
+             data = await asyncio.to_thread(_enrich_stock_info, data)
+        upsert_stock(data, user_id=current_user.id)
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/stocks/{code}")
+async def delete_stock_endpoint(code: str, current_user: User = Depends(get_current_user)):
+    try:
+        delete_stock(code, user_id=current_user.id)
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/market/stocks")
+async def search_market_stocks(query: str = ""):
+    stocks = []
+    
+    # Check cache
+    if os.path.exists(MARKET_STOCKS_CACHE):
+        try:
+            mtime = os.path.getmtime(MARKET_STOCKS_CACHE)
+            # Cache for 24h
+            if (datetime.now().timestamp() - mtime) < 86400:
+                with open(MARKET_STOCKS_CACHE, 'r', encoding='utf-8') as f:
+                    stocks = json.load(f)
+        except Exception as e:
+            print(f"Stock cache read error: {e}")
+            
+    if not stocks:
+        print("Fetching fresh stock list from AkShare...")
+        try:
+            import akshare as ak
+            # stock_zh_a_spot_em returns huge dataframe. 
+            # Use stock_info_a_code_name() if available for lighter list
+            df = ak.stock_info_a_code_name()
+            if not df.empty:
+                # columns: code, name
+                stocks = df.to_dict('records')
+                # Save cache
+                if not os.path.exists(CONFIG_DIR):
+                    os.makedirs(CONFIG_DIR)
+                with open(MARKET_STOCKS_CACHE, 'w', encoding='utf-8') as f:
+                    json.dump(stocks, f, ensure_ascii=False)
+        except Exception as e:
+            print(f"Error fetching stock list: {e}")
+            
+    if not query:
+        return stocks[:20]
+        
+    query = query.lower()
+    results = []
+    for s in stocks:
+        s_code = str(s.get('code', ''))
+        s_name = str(s.get('name', ''))
+        
+        if s_code.startswith(query) or query in s_name.lower():
+            results.append(s)
+            if len(results) >= 50:
+                break
+    return results
+
+@app.get("/api/market/stocks/{code}/details")
+async def get_stock_details_endpoint(code: str):
+    try:
+        # Realtime quote
+        quote = get_stock_realtime_quote(code)
+        
+        # Company Info (Sector/Industry)
+        info = {}
+        try:
+            import akshare as ak
+            df = ak.stock_individual_info_em(symbol=code)
+            if not df.empty:
+                # df columns: item, value
+                info_map = dict(zip(df['item'], df['value']))
+                info = {
+                    "industry": info_map.get("行业", ""),
+                    "market_cap": info_map.get("总市值", ""),
+                    "pe": info_map.get("市盈率", ""),
+                    "pb": info_map.get("市净率", "")
+                }
+        except:
+            pass
+            
+        return sanitize_data({
+            "quote": quote,
+            "info": info
+        })
+    except Exception as e:
+        print(f"Error fetching stock details: {e}")
+        return {}
+
+@app.get("/api/market/stocks/{code}/history")
+async def get_stock_history_endpoint(code: str):
+    try:
+        data = await asyncio.to_thread(get_stock_history, code)
+        return sanitize_data(data)
+    except Exception as e:
+        print(f"History error: {e}")
         return []
 
 if __name__ == "__main__":

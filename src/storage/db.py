@@ -49,6 +49,20 @@ def init_db():
         )
     ''')
     
+    # 4. Create Stocks Table
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS stocks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            code TEXT NOT NULL,
+            name TEXT NOT NULL,
+            market TEXT, 
+            sector TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            user_id INTEGER REFERENCES users(id),
+            UNIQUE(user_id, code)
+        )
+    ''')
+    
     # 3. Migration: Add user_id to funds if not exists
     # We want (user_id, code) to be unique, not just code globally. 
     # But SQLite limitations on ALTER TABLE are tricky. 
@@ -236,5 +250,60 @@ def delete_fund(code: str, user_id: int):
         raise ValueError("user_id required")
     conn = get_db_connection()
     conn.execute('DELETE FROM funds WHERE code = ? AND user_id = ?', (code, user_id))
+    conn.commit()
+    conn.close()
+
+# --- Stock Operations ---
+
+def get_all_stocks(user_id: int) -> List[Dict]:
+    if not user_id:
+        return []
+    conn = get_db_connection()
+    stocks = conn.execute('SELECT * FROM stocks WHERE user_id = ?', (user_id,)).fetchall()
+    conn.close()
+    return [dict(s) for s in stocks]
+
+def upsert_stock(stock_data: Dict, user_id: int):
+    if not user_id:
+        raise ValueError("user_id required")
+        
+    conn = get_db_connection()
+    c = conn.cursor()
+    
+    exists = c.execute('SELECT 1 FROM stocks WHERE code = ? AND user_id = ?', 
+                      (stock_data['code'], user_id)).fetchone()
+    
+    if exists:
+        c.execute('''
+            UPDATE stocks 
+            SET name=?, market=?, sector=?
+            WHERE code=? AND user_id=?
+        ''', (
+            stock_data['name'],
+            stock_data.get('market', ''),
+            stock_data.get('sector', ''),
+            stock_data['code'],
+            user_id
+        ))
+    else:
+        c.execute('''
+            INSERT INTO stocks (code, name, market, sector, user_id)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (
+            stock_data['code'],
+            stock_data['name'],
+            stock_data.get('market', ''),
+            stock_data.get('sector', ''),
+            user_id
+        ))
+    
+    conn.commit()
+    conn.close()
+
+def delete_stock(code: str, user_id: int):
+    if not user_id:
+        raise ValueError("user_id required")
+    conn = get_db_connection()
+    conn.execute('DELETE FROM stocks WHERE code = ? AND user_id = ?', (code, user_id))
     conn.commit()
     conn.close()
